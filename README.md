@@ -40,6 +40,22 @@ See full documentation in [docs/findings_spec_rama_v9.md](file:///c:/Users/mrcm_
 
 ---
 
+## 🔮 Future Work & Research Roadmap
+
+1. **Scaling to 8B+ Parameter LLMs (LLaMA-3 / Qwen-2.5)**:
+   - Validate Parseval Energy Scaling ($\frac{\alpha}{\sqrt{k_{\text{out}} \cdot k_{\text{in}}}}$) across 8B+ parameter models evaluated on downstream benchmarks (MMLU, GSM8K, HumanEval).
+
+2. **Custom Triton / CUDA Fused Spectral Kernels**:
+   - Implement fused 2D DWT / DCT + GEMM Triton kernels to eliminate intermediate PyTorch memory allocation during online fine-tuning and inference.
+
+3. **Lossless Entropy Compression for Serverless Delivery (Bitshuffle + zstd / rANS)**:
+   - Leverage weight permutation smoothness to apply lossless delta-encoding and rANS/zstd entropy compression, enabling high-speed cold-start serverless deployment and checkpoint storage.
+
+4. **Learnable Orthogonal Permutations (Monarch / Butterfly Factorization)**:
+   - Explore replacing greedy TSP permutations with end-to-end learnable Butterfly ($O(d \log d)$) matrices to discover optimal continuous spectral bases dynamically during training.
+
+---
+
 ## Official Benchmark Findings & Progress Log
 
 - 🏆 **[v9: Asymmetric Heterogeneous Quantization & Total Memory Footprint](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v9.md)** (EXP-09: 86.1% VRAM savings reaching 46.98 PPL).
