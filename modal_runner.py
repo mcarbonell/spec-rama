@@ -22,7 +22,7 @@ spec_rama_image = (
     gpu="A10G",
     timeout=1800,
 )
-def run_remote_spec_rama_experiment(exp_name: str = "exp09"):
+def run_remote_spec_rama_experiment(exp_name: str = "exp10"):
     import sys
     import torch
     
@@ -60,12 +60,15 @@ def run_remote_spec_rama_experiment(exp_name: str = "exp09"):
     elif exp_name == "exp09":
         from benchmarks.exp09_heterogeneous_quantization import run_exp09
         run_exp09(device="cuda", num_steps=500)
+    elif exp_name == "exp10":
+        from benchmarks.exp10_quantization_vs_adaptation_control import run_exp10
+        run_exp10(device="cuda", num_steps=500)
     else:
-        raise ValueError(f"Unknown experiment name: {exp_name}. Choose 'exp01' through 'exp09'.")
+        raise ValueError(f"Unknown experiment name: {exp_name}. Choose 'exp01' through 'exp10'.")
         
     print(f"=== REMOTE SPEC-RAMA EXPERIMENT ({exp_name.upper()}) COMPLETED ===")
 
 @app.local_entrypoint()
-def main(exp: str = "exp09"):
+def main(exp: str = "exp10"):
     print(f"Launching SpecRAMA Experiment [{exp}] on Modal cloud GPU...")
     run_remote_spec_rama_experiment.remote(exp_name=exp)
