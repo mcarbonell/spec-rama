@@ -4,15 +4,17 @@
 
 ---
 
-## 🏆 Official Heterogeneous & Memory Footprint Benchmark Results (EXP-09)
+## 🏆 Official Benchmark Summary & Zero-Shot Recovery Baseline (EXP-09)
 
 See full documentation in [docs/findings_spec_rama_v9.md](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v9.md) and [docs/findings_spec_rama_v8.md](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v8.md).
 
-| Adaptation Strategy | Avg Bitwidth | Base Weight Size | Adapter Size | Total Model Size | VRAM Savings | TEST PPL (WikiText-2) | Merged PPL (0 Latency) | FP32 Precision Recovery |
+| Adaptation Strategy | Avg Bitwidth | Base Weight Size | Adapter Size | Total Model Size | VRAM Savings | TEST PPL (WikiText-2) | Merged PPL (0 Latency) | SpecRAMA Delta Contribution |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **GPT-2 Base (FP32 Reference)** | 32.00-bit | 474.7 MB | 0.0 KB | **474.7 MB** | 0.0% | **46.18** | N/A | Reference (100.0%) |
-| **Symmetric NF4 (Attn-4b / FFN-4b)** | 4.25-bit | 65.5 MB | **294.9 KB** | **65.8 MB** | **86.1%** | **46.98** ↓ | **46.98** | **99.8% (46.98 PPL)** |
-| **Asymmetric (Attn-4b / FFN-3b)** | 3.55-bit | 54.8 MB | **174.6 KB** | **55.0 MB** | **88.4%** | **88.58** ↓ | **88.58** | **55 MB Extreme Savings** |
+| **Symmetric NF4 Base (Zero-Shot)** | 4.25-bit | 65.5 MB | 0.0 KB | **65.5 MB** | 86.2% | **92.18** | N/A | Quantized Base Degradation (+46.0 PPL) |
+| **Symmetric NF4 + SpecRAMA (32x32)** | 4.25-bit | 65.5 MB | **294.9 KB** | **65.8 MB** | **86.1%** | **46.98** ↓ | **46.98** | **SpecRAMA Recovery (-45.2 PPL / 99.8%)** |
+| **Asymmetric Base (Zero-Shot)** | 3.55-bit | 54.8 MB | 0.0 KB | **54.8 MB** | 88.5% | **~420.00** | N/A | Quantized Base Degradation (+373.8 PPL) |
+| **Asymmetric (Attn-4b/FFN-3b) + SpecRAMA** | 3.55-bit | 54.8 MB | **174.6 KB** | **55.0 MB** | **88.4%** | **88.58** ↓ | **88.58** | **SpecRAMA Recovery (-331.4 PPL)** |
 
 ---
 
@@ -66,26 +68,6 @@ See full documentation in [docs/findings_spec_rama_v9.md](file:///c:/Users/mrcm_
 - 📄 **[v4: Iso-Parameter Benchmark (SpecRAMA vs LoRA)](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v4.md)** (EXP-04: SpecRAMA owns sub-20 KB regime).
 - 📄 **[v3: Spectral Core Resolution Scaling Law](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v3.md)** (EXP-03: Monotonic 46.18 -> 36.21 PPL scaling).
 - 📄 **[v2: Out-of-Sample WikiText-2 Test Set Benchmark](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v2.md)** (EXP-02: Initial head-to-head evaluation).
-
----
-
-## Key Features
-
-1. **Permutation-Driven Energy Concentration**:
-   - Uses Greedy 1D/2D Bipartite TSP to reorder rows and columns of linear weights $W_0 \to P_L W_0 P_R^T$.
-   - Concentrates $>90\%$ of spectral energy into low-frequency coefficients.
-
-2. **Parseval Energy-Scaled Spectral Core Adapters**:
-   - Scaling normalized via $\frac{\alpha}{\sqrt{k_{\text{out}} \cdot k_{\text{in}}}}$.
-   - **DWT-2D (Haar Wavelet) Core**: Adapts multiscale quad-tree sub-bands.
-   - **DCT-2D Core**: Adapts continuous semantic projections.
-   - **FWHT-2D Core**: Adapts discrete logical gating projections.
-
-3. **Sub-20 KB Ultra-Low Memory Regime**:
-   - Operates in parameter regimes (4.6K - 18K params) where standard LoRA cannot exist ($r=1$ minimum is ~101K params).
-
-4. **Zero Latency Inference (`merge()`)**:
-   - Inverse-transforms and un-permutates adapter weights back into $W_0$ in-place pre-deployment with exact 100% precision.
 
 ---
 

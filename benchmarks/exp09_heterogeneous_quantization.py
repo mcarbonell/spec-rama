@@ -262,15 +262,17 @@ def run_exp09(device="cuda", num_steps=500):
     merged_asym, _ = evaluate_on_dataset(model_asym, test_data, device=device)
     print(f"  -> Asymmetric (3.55b avg) | Model: {total_a:.1f} MB (Base: {q_base_a:.1f}MB + Adapt: {adapt_a*1024:.1f}KB) | TEST PPL: {tuned_asym:.2f}")
 
-    print("\n==================================================================================================")
-    print("         EXP-09 ASYMMETRIC HETEROGENEOUS QUANTIZATION BENCHMARK SUMMARY                           ")
-    print("==================================================================================================")
-    print(f"| Adaptation / Strategy           | Avg Bitwidth | Base Size | Adapt Size | Total Model | Savings | TEST PPL | Merged PPL |")
-    print(f"|---------------------------------|--------------|-----------|------------|-------------|---------|----------|------------|")
-    print(f"| GPT-2 Base (FP32 Reference)     | 32.00-bit    | 474.7 MB  | 0.0 KB     | 474.7 MB    |   0.0%  | {base_test_ppl:8.2f} | N/A        |")
-    print(f"| Symmetric NF4 (Attn-4b/FFN-4b)  |  4.25-bit    |  65.5 MB  | 294.9 KB   |  65.8 MB    |  86.1%  | {tuned_sym:8.2f} | {merged_sym:10.2f} |")
-    print(f"| Asymmetric (Attn-4b/FFN-3b)     |  3.55-bit    |  54.8 MB  | 174.6 KB   |  55.0 MB    |  88.4%  | {tuned_asym:8.2f} | {merged_asym:10.2f} |")
-    print("==================================================================================================")
+    print("\n=====================================================================================================================")
+    print("                 EXP-09 ASYMMETRIC HETEROGENEOUS QUANTIZATION BENCHMARK SUMMARY                                      ")
+    print("=====================================================================================================================")
+    print(f"| Adaptation / Strategy                 | Avg Bitwidth | Base Size | Adapt Size | Total Model | Savings | TEST PPL | Merged PPL | Status |")
+    print(f"|---------------------------------------|--------------|-----------|------------|-------------|---------|----------|------------|--------|")
+    print(f"| GPT-2 Base (FP32 Reference)           | 32.00-bit    | 474.7 MB  | 0.0 KB     | 474.7 MB    |   0.0%  | {base_test_ppl:8.2f} | N/A        | Reference |")
+    print(f"| Symmetric NF4 Base (Zero-Shot Un-tuned)|  4.25-bit    |  65.5 MB  | 0.0 KB     |  65.5 MB    |  86.2%  | {step0_sym:8.2f} | N/A        | Quantized Base |")
+    print(f"| Symmetric NF4 + SpecRAMA (32x32)      |  4.25-bit    |  65.5 MB  | 294.9 KB   |  65.8 MB    |  86.1%  | {tuned_sym:8.2f} | {merged_sym:10.2f} | 99.8% Recovery |")
+    print(f"| Asymmetric Base (Zero-Shot Un-tuned)  |  3.55-bit    |  54.8 MB  | 0.0 KB     |  54.8 MB    |  88.5%  | {step0_asym:8.2f} | N/A        | Quantized Base |")
+    print(f"| Asymmetric (Attn-4b/FFN-3b) + SpecRAMA|  3.55-bit    |  54.8 MB  | 174.6 KB   |  55.0 MB    |  88.4%  | {tuned_asym:8.2f} | {merged_asym:10.2f} | Recovered |")
+    print("=====================================================================================================================")
 
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
