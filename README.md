@@ -4,7 +4,7 @@
 
 ---
 
-## 🏆 Unsparing 6-Arm Control Benchmark: Quantization Damage vs. Domain Adaptation (EXP-10)
+## 🏆 Official 6-Arm Control Benchmark: Quantization Damage vs. Domain Adaptation (EXP-10)
 
 See full documentation in [docs/findings_spec_rama_v10.md](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v10.md) and [docs/findings_spec_rama_v9.md](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v9.md).
 
@@ -19,27 +19,31 @@ See full documentation in [docs/findings_spec_rama_v10.md](file:///c:/Users/mrcm
 
 ---
 
-## 📊 Academic Positioning vs. State-of-the-Art (LoRA, QLoRA, FourierFT, VeRA)
+## 📊 Academic Positioning vs. Prior Art & Spectral PEFT Literature
 
 | Dimension | LoRA (Hu et al. 2021) | QLoRA (Dettmers et al. 2023) | FourierFT (Gao et al., ICML 2024) | VeRA (Kopiczko et al., ICLR 2024) | **Spec-RAMA (Ours)** |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Sub-30 KB Regime (<0.01% params)** | ❌ Impossible | ❌ Impossible | ⚠️ 1D DFT (~100 KB) | ✅ Vector Scaling (~10 KB) | **✅ DOMINANT (4.6 KB - 18 KB)** |
+| **Sub-30 KB Regime (<0.01% params)** | ❌ Impossible ($r=1$ min ~400 KB) | ❌ Impossible ($r=1$ min ~400 KB) | ⚠️ 1D DFT (~100 KB) | ✅ Vector Scaling (~10 KB) | **✅ DOMINANT (4.6 KB - 18 KB)** |
+| **Transform / Domain Basis** | Spatial Rank $r$ | Spatial Rank $r$ | 1D Discrete Fourier (DFT) | Frozen Random Projections | **2D Wavelet (DWT) & DCT-2D** |
 | **Zero-Latency In-Place Merging** | ✅ Yes (FP32) | ⚠️ Complex | ⚠️ Requires 1D IDFT | ⚠️ Matrix Scaling | **✅ EXACT 2D DWT/DCT MERGE** |
 | **4-bit Quantized Model Recovery** | N/A | **46.5 PPL** (3 MB - 10 MB) | N/A | N/A | **46.98 PPL (288 KB adapter)** |
-| **Core Scaling Law Formulation** | Linear rank $r$ ($\alpha/r$) | Linear rank $r$ ($\alpha/r$) | 1D High-Frequency Cut | Random Matrices | **Parseval Energy Scaling ($\frac{\alpha}{\sqrt{k_{\text{out}} k_{\text{in}}}}$)** |
+| **Core Scaling Law Formulation** | Linear rank $r$ ($\alpha/r$) | Linear rank $r$ ($\alpha/r$) | 1D High-Frequency Cut | Random Scaling Vectors | **Parseval Energy Scaling ($\frac{\alpha}{\sqrt{k_{\text{out}} k_{\text{in}}}}$)** |
 
 ---
 
-## 🛡️ Rigorous Hostile Reviewer Audit & Empirical Defense Strategy
+## ⚠️ Threats to Validity & Limitations Analysis
 
-### 🥊 Attack 1: "Does domain adaptation mask quantization damage?"
-* **Defense & Control (EXP-10)**: We explicitly isolated domain adaptation from quantization recovery in a 6-arm control experiment. FP32 + SpecRAMA adaptation reaches **37.69 PPL** (Adapted Upper Bound). NF4 + SpecRAMA reaches **46.98 PPL**, achieving **98.3% retention vs Native FP32** and **80.2% retention vs Adapted FP32**, while directly absorbing **45.20 PPL points of quantization damage** (92.18 $\to$ 46.98 PPL).
+### 1. Confounding Domain Adaptation with Quantization Damage Isolation
+A critical methodological threat is confusing out-of-domain evaluation with true quantization recovery. As demonstrated in **EXP-10**, fine-tuning GPT-2 FP32 on WikiText-2 Train yields **37.69 PPL** (Upper Bound). Therefore, NF4 + SpecRAMA (**46.98 PPL**) represents a **98.3% retention relative to native FP32 (46.18 PPL)** and **80.2% retention relative to domain-adapted FP32 (37.69 PPL)**. SpecRAMA's primary recovery mechanism is directly absorbing **45.20 PPL points of raw quantization noise** (reducing un-tuned NF4 from 92.18 to 46.98 PPL).
 
-### 🥊 Attack 2: "Is SpecRAMA's spectral adaptation novel compared to FourierFT (ICML 2024) and VeRA (ICLR 2024)?"
-* **Defense**: We acknowledge FourierFT (Gao et al. 2024) and VeRA (Kopiczko et al. 2024) as foundational prior art. SpecRAMA's distinct contributions are: (1) **Greedy 2D Bipartite TSP Weight Permutation**, (2) **Parseval Energy-Scaled 2D Wavelet/DCT Cores**, (3) **Multiplicative-Additive RAMA Modulation**, and (4) **In-Place Zero-Latency Merging into Quantized NF4 Base Weights**.
+### 2. Contextualization with Sub-Kilobyte & Spectral PEFT Baselines
+While classical LoRA and QLoRA operate in larger parameter budgets ($>100\text{K}$ parameters), several recent works explore ultra-compact parameter regimes:
+* **FourierFT (Gao et al., ICML 2024)**: Shares the core motivation of spectral PEFT via 1D Discrete Fourier Transforms. SpecRAMA extends this concept to **2D multiscale Discrete Wavelet Transforms (DWT)** combined with **Greedy Bipartite Weight Permutations**.
+* **VeRA (Kopiczko et al., ICLR 2024)** & **NOLA (Su et al., 2023)**: Achieve sub-10K parameter fine-tuning via frozen random matrices. SpecRAMA provides an alternative deterministic approach via **Parseval-scaled spectral cores**.
+* **QuIP# / QuaRot / SpinQuant**: Use randomized Hadamard/orthogonal rotations to eliminate weight outliers prior to quantization. SpecRAMA complements these methods by performing **bipartite TSP channel reordering** to maximize low-frequency spectral energy concentration.
 
-### 🥊 Attack 3: "Are non-overlapping block-wise evaluation metrics comparable across papers?"
-* **Defense**: All metrics reported in `spec-rama` are evaluated under an exact, self-contained, reproducible protocol (`Salesforce/wikitext-2-raw-v1`, block_size=256). All baselines (Native FP32, Adapted FP32, Zero-Shot NF4, and Tuned SpecRAMA) are evaluated under identical code paths.
+### 3. Model Scale & Protocol Standardization
+All benchmarks reported in this repository are executed under a strict, non-overlapping block-wise evaluation protocol (`Salesforce/wikitext-2-raw-v1`, block_size=256) on GPT-2 Small (124M). While Parseval's energy scaling formula $\frac{\alpha}{\sqrt{k_{\text{out}} \cdot k_{\text{in}}}}$ is dimension-agnostic, validating performance on 8B+ parameter models (e.g., LLaMA-3, Qwen-2.5) across reasoning tasks (MMLU, GSM8K) remains an essential area of ongoing work.
 
 ---
 
