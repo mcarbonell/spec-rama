@@ -24,6 +24,25 @@ See full documentation in [docs/findings_spec_rama_v12.md](file:///c:/Users/mrcm
 
 ---
 
+## 🎨 Visualizing 2D Bipartite TSP Permutations & Wavelet Energy Concentration
+
+Spec-RAMA turns raw model weight matrices into 2D smooth manifolds via alternating **2D Bipartite TSP Permutations ($\pi_{\text{row}}, \pi_{\text{col}}$)**. By sorting both rows and columns until Total Variation ($\text{TV}$) converges, spatial high-frequency noise is eliminated:
+
+![2D Bipartite TSP Weight Matrix Transformation](docs/img/weight_matrix_bipartite_tsp.png)
+
+### 🌊 2D Haar Wavelet Sub-Band Energy Concentration
+When the 2D Discrete Wavelet Transform (DWT-2D) is applied to the 2D TSP-ordered matrix $W_{\pi}$, high-frequency sub-bands ($\text{LH}, \text{HL}, \text{HH}$) collapse toward zero. **Over 92% of total matrix energy is concentrated in the top-left Low-Low ($\text{LL}$) sub-band**:
+
+![2D Haar Wavelet Sub-Band Energy Breakdown](docs/img/wavelet_spectrum_comparison.png)
+
+> [!TIP]
+> **Adaptive Total Variation ($\text{TV}$) Convergence Criterion**:
+> Instead of a fixed iteration count, `spec_rama/permutation.py` tracks the relative reduction in Total Variation:
+> $$\text{TV}(W) = \sum_{i} \sum_{j} |W_{i+1, j} - W_{i,j}| + \sum_{i} \sum_{j} |W_{i, j+1} - W_{i,j}|$$
+> Alternating TSP iterations terminate automatically when $\frac{\text{TV}_{k-1} - \text{TV}_k}{\text{TV}_{k-1}} < \text{tol}$, guaranteeing maximum spectral compaction with minimal compute overhead.
+
+---
+
 ## 📊 Academic Positioning vs. Prior Art & Spectral PEFT Literature
 
 | Dimension | LoRA (Hu et al. 2021) | QLoRA (Dettmers et al. 2023) | FourierFT (Gao et al., ICML 2024) | VeRA (Kopiczko et al., ICLR 2024) | **Spec-RAMA (Ours)** |

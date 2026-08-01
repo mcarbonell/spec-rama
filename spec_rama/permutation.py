@@ -66,21 +66,31 @@ def compute_pca_permutation(matrix: torch.Tensor, axis: int = 0) -> torch.Tensor
     return perm
 
 
+def compute_total_variation_2d(matrix: torch.Tensor) -> float:
+    """Computes total variation (TV norm) of a 2D matrix measuring spatial noise."""
+    tv_rows = torch.abs(matrix[1:, :] - matrix[:-1, :]).sum()
+    tv_cols = torch.abs(matrix[:, 1:] - matrix[:, :-1]).sum()
+    return (tv_rows + tv_cols).item()
+
+
 def compute_joint_bipartite_2d_permutation(
     weight: torch.Tensor,
-    num_iters: int = 2
+    max_iters: int = 5,
+    tol: float = 1e-3
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    Computes a joint 2D bipartite permutation by alternating TSP sorting on rows and columns.
-    This creates a smooth 2D surface (manifold) preserving 2D spatial topology.
+    Computes a joint 2D bipartite permutation by alternating TSP sorting on rows and columns
+    until Total Variation (TV) converges within tolerance 'tol' or reaches 'max_iters'.
+    This creates a smooth 2D manifold preserving 2D spatial topology.
     """
     out_dim, in_dim = weight.shape
     row_perm = torch.arange(out_dim, dtype=torch.long)
     col_perm = torch.arange(in_dim, dtype=torch.long)
     
     w_curr = weight.detach().clone()
+    prev_tv = compute_total_variation_2d(w_curr)
     
-    for _ in range(num_iters):
+    for iter_idx in range(max_iters):
         r_p = compute_greedy_tsp_1d(w_curr, axis=0)
         row_perm = row_perm[r_p]
         w_curr = w_curr[r_p, :]
@@ -88,6 +98,15 @@ def compute_joint_bipartite_2d_permutation(
         c_p = compute_greedy_tsp_1d(w_curr, axis=1)
         col_perm = col_perm[c_p]
         w_curr = w_curr[:, c_p]
+        
+        curr_tv = compute_total_variation_2d(w_curr)
+        rel_improvement = (prev_tv - curr_tv) / (prev_tv + 1e-8)
+        
+        if rel_improvement < tol and iter_idx >= 1:
+            # Reached Total Variation convergence threshold
+            break
+            
+        prev_tv = curr_tv
         
     return row_perm, col_perm
 
