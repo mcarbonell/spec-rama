@@ -266,7 +266,7 @@ def run_exp11(device="cuda", num_steps=500):
                 
     inject_lora_in_model(model_nf4_lora, target_modules=["c_attn", "c_proj", "c_fc"], rank=4, alpha=8.0)
     model_nf4_lora = model_nf4_lora.to(device)
-    train_on_dataset_long_horizon(model_nf4_lora, train_data, steps=num_steps, lr_max=1e-2, lr_min=1e-3, device=device, seed=42)
+    train_on_dataset_long_horizon(model_nf4_lora, train_data, steps=num_steps, lr_max=1e-4, lr_min=1e-5, device=device, seed=42)
     ppl_nf4_lora, _, bpt_nf4_lora = evaluate_on_dataset(model_nf4_lora, test_data, device=device)
     print(f"  -> Proper Block-Wise NF4 + Standard LoRA (r=4): {ppl_nf4_lora:.2f} PPL ({bpt_nf4_lora:.3f} bits/token)")
 
