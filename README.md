@@ -4,19 +4,23 @@
 
 ---
 
-## 🏆 Landmark Head-to-Head Benchmark: Block-Wise NF4 & Bits/Token Entropy (EXP-11)
+## 🏆 Landmark Head-to-Head Benchmark: Block-Wise NF4 & Bits/Token Entropy (EXP-11 & EXP-12 Audit)
 
-See full documentation in [docs/findings_spec_rama_v11.md](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v11.md) and [docs/findings_spec_rama_v10.md](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v10.md).
+See full documentation in [docs/findings_spec_rama_v12.md](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v12.md) and [docs/findings_spec_rama_v11.md](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v11.md).
 
 | Experimental Arm / Strategy | Base Format | Adapter Size | TEST PPL | Bits/Token (bpt) | $\Delta \text{bpt}$ vs Native FP32 | $\Delta \text{bpt}$ vs Adapted FP32 | Model Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | **1. GPT-2 FP32 Native (Zero-Shot)** | 32-bit FP32 | 0.0 KB | **46.18** | **5.529 bpt** | 0.000 bpt | N/A | Reference |
 | **2. GPT-2 FP32 + SpecRAMA (Tuned)** | 32-bit FP32 | **294.9 KB** | **35.99** ↓ | **5.169 bpt** | -0.360 bpt | 0.000 bpt | **Adapted Upper Bound** |
 | **3. Block-Wise NF4 Base (Zero-Shot)** | 4-bit NF4 | 0.0 KB | **49.34** | **5.625 bpt** | +0.096 bpt | +0.455 bpt | Proper Quantized Base |
-| **4. Block-Wise NF4 + SpecRAMA (Tuned)** | 4-bit NF4 | **294.9 KB** | **37.98** ↓ | **5.247 bpt** | **-0.282 bpt** | **+0.078 bpt** | **RECUPERACIÓN TOTAL (<0.08 bpt)** |
-| **5. Block-Wise NF4 + LoRA (r=4 Tuned)** | 4-bit NF4 | 1.55 MB | **391.52** | **8.613 bpt** | +3.084 bpt | +3.443 bpt | Spatial LoRA Collapse |
+| **4. Block-Wise NF4 + SpecRAMA (Tuned)** | 4-bit NF4 | **294.9 KB** | **37.98** ↓ | **5.247 bpt** | **-0.282 bpt** | **+0.078 bpt** | **FULL RECOVERY (5.2x smaller)** |
+| **5. Block-Wise NF4 + LoRA ($r=4$, $lr=1e-4$)** | 4-bit NF4 | **1.55 MB** | **35.58** ↓ | **5.153 bpt** | **-0.376 bpt** | **-0.016 bpt** | **Properly Tuned QLoRA** |
 | **6. Asymmetric NF3/4 Base (Zero-Shot)** | 3.55-bit NF3/4 | 0.0 KB | **60.45** | **5.918 bpt** | +0.389 bpt | +0.748 bpt | Quantized Base |
 | **7. Asymmetric + SpecRAMA (Tuned)** | 3.55-bit NF3/4 | **174.6 KB** | **45.99** ↓ | **5.523 bpt** | **-0.006 bpt** | **+0.354 bpt** | **Beats Native FP32 at 3.55b** |
+
+> [!NOTE]
+> **Audit & Historical Rigor Note (EXP-12 Sweep)**:
+> In the initial un-tuned run of EXP-11, standard LoRA ($r=4$) was trained with `lr_max = 1e-2` (matching SpecRAMA's learning rate), resulting in numerical divergence (391 PPL) due to gradient overshooting on un-scaled spatial low-rank matrices ($\alpha/r = 2.0$). Following a systematic hyperparameter audit in EXP-12, standard LoRA trained at its optimal rate (`lr_max = 1e-4`) reaches **35.58 PPL (5.153 bpt)**. SpecRAMA Wavelet ($32\times32$) achieves competitive performance (**37.98 PPL / 5.247 bpt**) while utilizing a **$5.2\times$ smaller parameter footprint (294.9 KB vs 1.55 MB)**. Furthermore, SpecRAMA's Parseval Energy Scaling renders it **$10\times$ more resilient to learning rate choices**, maintaining stable convergence across $lr \in [10^{-4}, 10^{-2}]$.
 
 ---
 
@@ -66,6 +70,7 @@ All benchmarks reported in this repository are executed under a strict, non-over
 
 ## Official Benchmark Findings & Progress Log
 
+- 🏆 **[v12: LoRA Hyperparameter Sweep & Stability Audit](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v12.md)** (EXP-12: Hyperparameter audit establishing LoRA tuned baseline at 35.58 PPL vs SpecRAMA 37.98 PPL at 5.2x smaller size).
 - 🏆 **[v11: Proper QLoRA NF4 Block-Wise Baseline & Head-to-Head LoRA](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v11.md)** (EXP-11: Proper block-wise NF4 quantization reaching 37.98 PPL, +0.078 bpt from adapted FP32).
 - 🏆 **[v10: Unsparing 6-Arm Control Benchmark (Quantization Damage vs. Domain Adaptation)](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v10.md)** (EXP-10: 6-arm control experiment isolating domain adaptation and quantization damage).
 - 🏆 **[v9: Asymmetric Heterogeneous Quantization & Total Memory Footprint](file:///c:/Users/mrcm_/Local/proj/algorithms/spec-rama/docs/findings_spec_rama_v9.md)** (EXP-09: 86.1% VRAM savings reaching 46.98 PPL).
