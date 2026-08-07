@@ -170,4 +170,7 @@ modal run modal_runner.py --exp exp10
 
 # Exp11: Proper Block-Wise NF4 Baseline & Head-to-Head LoRA Benchmark
 modal run modal_runner.py --exp exp11
+
+# Exp12: LoRA Hyperparameter Sweep
+modal run modal_runner.py --exp exp12
 ```
