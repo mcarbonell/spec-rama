@@ -8,21 +8,22 @@
 
 See full documentation in [docs/findings_spec_rama_v12.md](./docs/findings_spec_rama_v12.md) and [docs/findings_spec_rama_v11.md](./docs/findings_spec_rama_v11.md).
 
-| Experimental Arm / Strategy | Base Format | Adapter Size | TEST PPL | Bits/Token (bpt) | $\Delta \text{bpt}$ vs Native FP32 | $\Delta \text{bpt}$ vs Adapted FP32 | Model Status |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **1. GPT-2 FP32 Native (Zero-Shot)** | 32-bit FP32 | 0.0 KB | **46.18** | **5.529 bpt** | 0.000 bpt | N/A | Reference |
-| **2. GPT-2 FP32 + SpecRAMA (Tuned)** | 32-bit FP32 | **294.9 KB** | **35.99** ↓ | **5.169 bpt** | -0.360 bpt | 0.000 bpt | **Adapted Upper Bound** |
-| **3. Block-Wise NF4 Base (Zero-Shot)** | 4-bit NF4 | 0.0 KB | **49.34** | **5.625 bpt** | +0.096 bpt | +0.455 bpt | Proper Quantized Base |
-| **4. Block-Wise NF4 + SpecRAMA (Tuned)** | 4-bit NF4 | **294.9 KB** | **37.98** ↓ | **5.247 bpt** | **-0.282 bpt** | **+0.078 bpt** | **Near-adapted-FP32 performance** |
-| **5. Block-Wise NF4 + LoRA ($r=4$, $lr=1e-4$)** | 4-bit NF4 | **1.55 MB** | **35.58** ↓ | **5.153 bpt** | **-0.376 bpt** | **-0.016 bpt** | **NF4 + LoRA baseline** |
-| **6. Asymmetric NF3/4 Base (Zero-Shot)** | 3.55-bit NF3/4 | 0.0 KB | **60.45** | **5.918 bpt** | +0.389 bpt | +0.748 bpt | Quantized Base |
-| **7. Asymmetric + SpecRAMA (Tuned)** | 3.55-bit NF3/4 | **174.6 KB** | **45.99** ↓ | **5.523 bpt** | **-0.006 bpt** | **+0.354 bpt** | **Near-Parity with Native FP32 at 3.55b** |
+| Experimental Arm / Strategy | Base Format | Trainable Params | Adapter Size (FP32) | TEST PPL | Bits/Token (bpt) | $\Delta \text{bpt}$ vs Native FP32 | $\Delta \text{bpt}$ vs Adapted FP32 | Model Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1. GPT-2 FP32 Native (Zero-Shot)** | 32-bit FP32 | 0 | 0.0 KB | **46.18** | **5.529 bpt** | 0.000 bpt | N/A | Reference |
+| **2. GPT-2 FP32 + SpecRAMA (Tuned)** | 32-bit FP32 | 98,304 | **393.2 KB** | **35.99** ↓ | **5.169 bpt** | -0.360 bpt | 0.000 bpt | **Adapted Upper Bound** |
+| **3. Block-Wise NF4 Base (Zero-Shot)** | 4-bit NF4 | 0 | 0.0 KB | **49.34** | **5.625 bpt** | +0.096 bpt | +0.455 bpt | Proper Quantized Base |
+| **4. Block-Wise NF4 + SpecRAMA (Tuned)** | 4-bit NF4 | 98,304 | **393.2 KB** | **37.98** ↓ | **5.247 bpt** | **-0.282 bpt** | **+0.078 bpt** | **Near-adapted-FP32 performance** |
+| **5. Block-Wise NF4 + LoRA ($r=4$, $lr=1e-4$)** | 4-bit NF4 | 589,824 | **2.36 MB** | **35.58** ↓ | **5.153 bpt** | **-0.376 bpt** | **-0.016 bpt** | **NF4 + LoRA baseline** |
+| **6. Asymmetric NF3/4 Base (Zero-Shot)** | 3.55-bit NF3/4 | 0 | 0.0 KB | **60.45** | **5.918 bpt** | +0.389 bpt | +0.748 bpt | Quantized Base |
+| **7. Asymmetric + SpecRAMA (Tuned)** | 3.55-bit NF3/4 | 52,224 | **208.9 KB** | **45.99** ↓ | **5.523 bpt** | **-0.006 bpt** | **+0.354 bpt** | **Near-Parity with Native FP32 at 3.55b** |
 
 The pretrained base is frozen and functionally unchanged. The permutations define a coordinate system in which the adapter update is constrained to be spectrally smooth. At merge time, the reconstructed update is mapped back to the original coordinates and added to the base weight.
 
 > [!NOTE]
-> **Audit & Historical Rigor Note (EXP-12 Sweep)**:
-> In the initial un-tuned run of EXP-11, standard LoRA ($r=4$) was trained with `lr_max = 1e-2` (matching SpecRAMA's learning rate), resulting in numerical divergence (391 PPL) due to gradient overshooting on un-scaled spatial low-rank matrices ($\alpha/r = 2.0$). Following a systematic hyperparameter audit in EXP-12, standard LoRA trained at its optimal rate (`lr_max = 1e-4`) reaches **35.58 PPL (5.153 bpt)**. SpecRAMA Wavelet ($32\times32$) achieves competitive performance (**37.98 PPL / 5.247 bpt**) while utilizing a **$5.2\times$ smaller parameter footprint (294.9 KB vs 1.55 MB)**. Furthermore, SpecRAMA's Parseval Energy Scaling renders it **less sensitive to learning rate choices**, maintaining stable convergence across $lr \in [10^{-4}, 10^{-2}]$.
+> **Audit & Mathematical Rigor Note**:
+> All target linear projection layers (`c_attn`, `c_proj` [attn/mlp], `c_fc` = 48 layers in GPT-2 Small) are adapted with strictly frozen base embeddings (`wte`, `wpe`) and LayerNorms. SpecRAMA Wavelet ($32\times32$) achieves competitive performance (**37.98 PPL / 5.247 bpt**) utilizing a **$6.0\times$ smaller parameter footprint (393.2 KB vs 2.36 MB)** than standard LoRA ($r=4$). Furthermore, SpecRAMA's Parseval Energy Scaling ($\frac{\alpha}{\sqrt{k_{\text{out}} \cdot k_{\text{in}}} \cdot \text{std}(W_0)}$) renders training stable across multiple orders of magnitude of learning rate.
+> Standard evaluation uses 100 non-overlapping blocks of 256 tokens (25,600 tokens) with full test set evaluation (~287k tokens) supported via `--full-test`.
 
 ---
 
