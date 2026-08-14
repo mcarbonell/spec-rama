@@ -253,8 +253,8 @@ def run_exp11(device="cuda", num_steps=500):
     ppl_nf4_spec, _, bpt_nf4_spec = evaluate_on_dataset(model_nf4_spec, test_data, device=device)
     print(f"  -> Proper Block-Wise NF4 + SpecRAMA: {ppl_nf4_spec:.2f} PPL ({bpt_nf4_spec:.3f} bits/token)")
 
-    # 5. Proper Block-Wise NF4 + Standard LoRA (rank=4, 405K params, 1.55 MB) [Tuned]
-    print("\n[5/7] Evaluating Proper Block-Wise NF4 + Standard LoRA (r=4, 405K params) [Tuned]...")
+    # 5. Proper Block-Wise NF4 + Standard LoRA (rank=4, 589K params, 2.36 MB) [Tuned]
+    print("\n[5/7] Evaluating Proper Block-Wise NF4 + Standard LoRA (r=4, 589K params) [Tuned]...")
     model_nf4_lora = GPT2LMHeadModel.from_pretrained("gpt2")
     with torch.no_grad():
         for name, module in model_nf4_lora.named_modules():
@@ -264,8 +264,10 @@ def run_exp11(device="cuda", num_steps=500):
                 w_rec = w_q_2d.t() if module.__class__.__name__ == "Conv1D" else w_q_2d
                 module.weight.copy_(w_rec)
                 
-    inject_lora_in_model(model_nf4_lora, target_modules=["c_attn", "c_proj", "c_fc"], rank=4, alpha=8.0)
+    inject_lora_in_model(model_nf4_lora, target_modules=["c_attn", "c_proj", "c_fc"], rank=4, alpha=8.0, freeze_base=True)
     model_nf4_lora = model_nf4_lora.to(device)
+    train_params, total_params, ratio = count_trainable_parameters(model_nf4_lora)
+    print(f"  -> LoRA Trainable Parameters: {train_params:,} / {total_params:,} ({ratio:.3f}%)")
     train_on_dataset_long_horizon(model_nf4_lora, train_data, steps=num_steps, lr_max=1e-4, lr_min=1e-5, device=device, seed=42)
     ppl_nf4_lora, _, bpt_nf4_lora = evaluate_on_dataset(model_nf4_lora, test_data, device=device)
     print(f"  -> Proper Block-Wise NF4 + Standard LoRA (r=4): {ppl_nf4_lora:.2f} PPL ({bpt_nf4_lora:.3f} bits/token)")

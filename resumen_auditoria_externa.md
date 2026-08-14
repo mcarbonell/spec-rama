@@ -139,7 +139,7 @@ Este documento consolida y sintetiza de manera exhaustiva todos los hallazgos t�
 ## 7. Plan de Acción Inmediato (Checklist de Refactorización)
 
 - [x] **1. Corregir `permutation.py`**: Cambiar `num_iters=2` por `max_iters=2` en `compute_2d_permutations`.
-- [ ] **2. Blindar la Congelación en LoRA**: Asegurar que `inject_lora_in_model` o el script de benchmark congele explícitamente `model.parameters()` antes de habilitar gradientes solo en `lora_A` y `lora_B`.
+- [x] **2. Blindar la Congelación en LoRA**: Asegurar que `inject_lora_in_model` o el script de benchmark congele explícitamente `model.parameters()` antes de habilitar gradientes solo en `lora_A` y `lora_B`.
 - [ ] **3. Instrumentación Limpia y Transparente**:
   - Imprimir conteo medido de parámetros con `requires_grad=True` en todos los brazos.
   - Imprimir tamaño exacto en bytes de los tensores entrenables.

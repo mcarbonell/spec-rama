@@ -79,13 +79,26 @@ def inject_lora_in_model(
     target_modules: List[str],
     rank: int = 8,
     alpha: float = 16.0,
+    freeze_base: bool = True,
 ) -> List[LoRALinear]:
+    """
+    Recursively finds target Linear layers in a PyTorch model and wraps them with LoRALinear.
+    When freeze_base=True, freezes all base model parameters so ONLY LoRA parameters train.
+    Returns a list of injected LoRALinear layers.
+    """
+    if freeze_base:
+        for p in model.parameters():
+            p.requires_grad = False
+
     injected = []
     def _inject(module: nn.Module):
         for name, child in list(module.named_children()):
             is_target = isinstance(child, nn.Linear) or child.__class__.__name__ in ["Conv1D", "Linear"]
             if is_target and any(target in name for target in target_modules):
                 wrapped = LoRALinear(child, rank=rank, alpha=alpha)
+                # Ensure LoRA parameters are trainable
+                wrapped.lora_A.requires_grad = True
+                wrapped.lora_B.requires_grad = True
                 setattr(module, name, wrapped)
                 injected.append(wrapped)
             else:

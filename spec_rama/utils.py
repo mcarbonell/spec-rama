@@ -14,11 +14,17 @@ def inject_spec_rama_in_model(
     permutation_method: str = "tsp",
     use_multiplicative: bool = True,
     use_additive: bool = True,
+    freeze_base: bool = True,
 ) -> List[SpecRAMALinear]:
     """
     Recursively finds target Linear layers in a PyTorch model and wraps them with SpecRAMALinear.
+    When freeze_base=True, freezes all base model parameters so ONLY SpecRAMA cores train.
     Returns a list of injected layers.
     """
+    if freeze_base:
+        for p in model.parameters():
+            p.requires_grad = False
+
     injected_layers = []
 
     def _inject(module: nn.Module):
@@ -35,6 +41,10 @@ def inject_spec_rama_in_model(
                     use_multiplicative=use_multiplicative,
                     use_additive=use_additive,
                 )
+                if wrapped.core_m is not None:
+                    wrapped.core_m.requires_grad = True
+                if wrapped.core_a is not None:
+                    wrapped.core_a.requires_grad = True
                 setattr(module, name, wrapped)
                 injected_layers.append(wrapped)
             else:

@@ -9,6 +9,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from spec_rama.lora_baseline import inject_lora_in_model
+from spec_rama import count_trainable_parameters
 from benchmarks.exp11_proper_qlora_nf4_baseline import (
     quantize_blockwise_nf,
     NF4_LEVELS,
@@ -33,11 +34,11 @@ def run_exp12():
     
     # Test different LRs and Alphas for LoRA (r=4)
     lrs = [1e-4, 5e-4, 1e-3, 2e-3, 5e-3, 1e-2]
-    alphas = [4.0, 8.0, 16.0]
+    alphas = [8.0]
     
     results = []
     
-    for alpha in [8.0]:
+    for alpha in alphas:
         for lr in lrs:
             print(f"\n--- Testing Standard LoRA (r=4, alpha={alpha}) with lr_max={lr} ---")
             model_nf4_lora = GPT2LMHeadModel.from_pretrained("gpt2")
@@ -49,8 +50,10 @@ def run_exp12():
                         w_rec = w_q_2d.t() if module.__class__.__name__ == "Conv1D" else w_q_2d
                         module.weight.copy_(w_rec)
                         
-            inject_lora_in_model(model_nf4_lora, target_modules=targets, rank=4, alpha=alpha)
+            inject_lora_in_model(model_nf4_lora, target_modules=targets, rank=4, alpha=alpha, freeze_base=True)
             model_nf4_lora = model_nf4_lora.to(device)
+            train_params, total_params, ratio = count_trainable_parameters(model_nf4_lora)
+            print(f"  Trainable Parameters: {train_params:,} / {total_params:,} ({ratio:.3f}%)")
             
             lr_min = lr / 10.0
             train_on_dataset_long_horizon(
