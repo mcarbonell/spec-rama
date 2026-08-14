@@ -12,7 +12,7 @@ class SharedSpecRAMALinear(nn.Module):
     """
     def __init__(
         self,
-        base_layer: nn.Linear,
+        base_layer: nn.Module,
         master_core_m: Optional[nn.Parameter],
         master_core_a: Optional[nn.Parameter],
         transform_type: str = "dct",
@@ -22,7 +22,7 @@ class SharedSpecRAMALinear(nn.Module):
         permutation_method: str = "tsp",
     ):
         super().__init__()
-        # Use SpecRAMALinear internally
+        # Instantiate SpecRAMALinear without allocating local cores (0 dead parameters)
         self.spec_layer = SpecRAMALinear(
             base_layer=base_layer,
             transform_type=transform_type,
@@ -30,11 +30,11 @@ class SharedSpecRAMALinear(nn.Module):
             alpha_m=alpha_m,
             alpha_a=alpha_a,
             permutation_method=permutation_method,
-            use_multiplicative=(master_core_m is not None),
-            use_additive=(master_core_a is not None),
+            use_multiplicative=False,
+            use_additive=False,
         )
         
-        # Override the local cores with pointers to the master cores
+        # References to global master cores
         self.master_core_m = master_core_m
         self.master_core_a = master_core_a
         
@@ -71,6 +71,8 @@ class SharedSpecRAMALinear(nn.Module):
             return F.linear(x, w_eff, self.spec_layer.base_layer.bias)
 
     def merge(self):
+        if self.spec_layer.merged:
+            return
         w_eff = self.get_effective_weight()
         self.spec_layer.base_layer.weight.data.copy_(w_eff)
         self.spec_layer.merged = True
@@ -80,7 +82,7 @@ class SharedSpecRAMAModel(nn.Module):
     """
     Wraps a model to inject a single shared Master Spectral Core across all targeted layers.
     Total trainable parameters = 1 Master Core (e.g. 8x8 = 64 params) + 2 * (Number of Layers) gains.
-    Sub-Kilobyte PEFT!
+    True Sub-Kilobyte PEFT!
     """
     def __init__(
         self,
@@ -90,19 +92,25 @@ class SharedSpecRAMAModel(nn.Module):
         core_size: Tuple[int, int] = (8, 8),
         alpha_m: float = 1.0,
         alpha_a: float = 8.0,
+        permutation_method: str = "tsp",
+        freeze_base: bool = True,
     ):
         super().__init__()
         self.model = model
         self.target_modules = target_modules
         
+        if freeze_base:
+            for p in model.parameters():
+                p.requires_grad = False
+
         # Master Cores (shared globally)
         self.master_core_m = nn.Parameter(torch.zeros(*core_size))
         self.master_core_a = nn.Parameter(torch.zeros(*core_size))
         
         self.shared_layers: List[SharedSpecRAMALinear] = []
-        self._inject_shared_cores(self.model, transform_type, core_size, alpha_m, alpha_a)
+        self._inject_shared_cores(self.model, transform_type, core_size, alpha_m, alpha_a, permutation_method)
 
-    def _inject_shared_cores(self, module, transform_type, core_size, alpha_m, alpha_a):
+    def _inject_shared_cores(self, module, transform_type, core_size, alpha_m, alpha_a, permutation_method):
         for name, child in list(module.named_children()):
             is_target_layer = isinstance(child, nn.Linear) or child.__class__.__name__ in ["Conv1D", "Linear"]
             if is_target_layer and any(t in name for t in self.target_modules):
@@ -114,11 +122,12 @@ class SharedSpecRAMAModel(nn.Module):
                     core_size=core_size,
                     alpha_m=alpha_m,
                     alpha_a=alpha_a,
+                    permutation_method=permutation_method,
                 )
                 setattr(module, name, wrapped)
                 self.shared_layers.append(wrapped)
             else:
-                self._inject_shared_cores(child, transform_type, core_size, alpha_m, alpha_a)
+                self._inject_shared_cores(child, transform_type, core_size, alpha_m, alpha_a, permutation_method)
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)

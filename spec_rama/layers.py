@@ -88,10 +88,10 @@ class SpecRAMALinear(nn.Module):
         else:
             self.register_parameter("core_a", None)
 
-        # Scale factor & Base weight std
+        # Scale factor & Base weight std as buffer
         with torch.no_grad():
-            w_std = base_weight_2d.std().item()
-            self.w_std = max(w_std, 1e-5)
+            w_std_val = base_weight_2d.std().item()
+            self.register_buffer("w_std", torch.tensor(max(w_std_val, 1e-5), dtype=torch.float32))
 
         self.merged = False
         self.original_weight: Optional[torch.Tensor] = None
@@ -136,12 +136,13 @@ class SpecRAMALinear(nn.Module):
         core_a_val = custom_core_a if custom_core_a is not None else self.core_a
 
         core_dim_scale = math.sqrt(self.core_size[0] * self.core_size[1])
-        if self.use_multiplicative and core_m_val is not None:
+        w_std_float = self.w_std.item() if isinstance(self.w_std, torch.Tensor) else float(self.w_std)
+        if (self.use_multiplicative or custom_core_m is not None) and core_m_val is not None:
             mod_matrix = self._synthesize_matrix_from_core(core_m_val)
-            scaling = self.alpha_m / (core_dim_scale * self.w_std)
+            scaling = self.alpha_m / (core_dim_scale * w_std_float)
             w_eff = w_eff * (1.0 + scaling * mod_matrix)
             
-        if self.use_additive and core_a_val is not None:
+        if (self.use_additive or custom_core_a is not None) and core_a_val is not None:
             add_matrix = self._synthesize_matrix_from_core(core_a_val)
             scaling = self.alpha_a / core_dim_scale
             w_eff = w_eff + scaling * add_matrix

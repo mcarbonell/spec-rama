@@ -144,7 +144,7 @@ Este documento consolida y sintetiza de manera exhaustiva todos los hallazgos t�
   - Imprimir conteo medido de parámetros con `requires_grad=True` en todos los brazos.
   - Imprimir tamaño exacto en bytes de los tensores entrenables.
   - Serializar resultados a un archivo `results_expXX.json`.
-- [ ] **4. Arreglar `shared_layers.py`**: Eliminar los parámetros locales no utilizados en `SharedSpecRAMALinear` para alcanzar la promesa real Sub-KB.
+- [x] **4. Arreglar `shared_layers.py`**: Eliminar los parámetros locales no utilizados en `SharedSpecRAMALinear` para alcanzar la promesa real Sub-KB.
 - [ ] **5. Corregir Documentación y Metadatos**:
   - Actualizar tamaños reales: SpecRAMA $32\times 32$ (48 mód) = 393.2 kB; LoRA $r=4$ (48 mód) = 2.36 MB ($6.0\times$ ratio).
   - Clarificar tokens evaluados (especificar si es subset de 25.6k o test completo de 280k).
