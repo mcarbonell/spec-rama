@@ -20,12 +20,14 @@ def get_dct_matrix_1d(N: int) -> torch.Tensor:
 def get_walsh_matrix_1d(N: int) -> torch.Tensor:
     """
     Computes the 1D Normalized Walsh-Hadamard Matrix of size (N, N).
-    N must be a power of 2.
+    Guarantees strict orthogonality (H @ H.T = I) for any dimension N.
     """
     if (N & (N - 1)) != 0 or N <= 0:
         p = 2 ** math.ceil(math.log2(N))
         H_full = get_walsh_matrix_1d(p)
-        return H_full[:N, :N]
+        # Re-orthogonalize truncated Hadamard submatrix via QR decomposition
+        Q, _ = torch.linalg.qr(H_full[:N, :N])
+        return Q
 
     H = torch.tensor([[1.0]], dtype=torch.float32)
     while H.shape[0] < N:
@@ -44,7 +46,11 @@ def haar_dwt_2d(x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tens
     pad_h = 1 if H % 2 != 0 else 0
     pad_w = 1 if W % 2 != 0 else 0
     if pad_h > 0 or pad_w > 0:
-        x = torch.nn.functional.pad(x, (0, pad_w, 0, pad_h), mode='reflect')
+        x = torch.nn.functional.pad(
+            x.unsqueeze(0).unsqueeze(0),
+            (0, pad_w, 0, pad_h),
+            mode='replicate'
+        ).squeeze(0).squeeze(0)
         
     x00 = x[0::2, 0::2]
     x01 = x[0::2, 1::2]
