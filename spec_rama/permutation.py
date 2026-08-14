@@ -113,7 +113,9 @@ def compute_joint_bipartite_2d_permutation(
 
 def compute_2d_permutations(
     weight: torch.Tensor,
-    method: str = "bipartite_tsp"
+    method: str = "bipartite_tsp",
+    max_iters: int = 5,
+    tol: float = 1e-3,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Computes both row and column permutations for a 2D weight matrix (out_features, in_features).
@@ -121,12 +123,14 @@ def compute_2d_permutations(
     Args:
         weight: PyTorch Tensor (out_features, in_features)
         method: "bipartite_tsp", "tsp", or "pca"
+        max_iters: Maximum iterations for bipartite TSP (default: 5)
+        tol: Convergence tolerance for relative total variation improvement
     Returns:
         row_perm: indices for rows (length out_features)
         col_perm: indices for columns (length in_features)
     """
     if method == "bipartite_tsp":
-        return compute_joint_bipartite_2d_permutation(weight, num_iters=2)
+        return compute_joint_bipartite_2d_permutation(weight, max_iters=max_iters, tol=tol)
     elif method == "tsp":
         row_perm = compute_greedy_tsp_1d(weight, axis=0)
         col_perm = compute_greedy_tsp_1d(weight, axis=1)
