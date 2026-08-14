@@ -136,42 +136,38 @@ fast_out = spec_layer(x)
 
 ---
 
-## Reproducible Benchmarks
+## 🚀 Reproducible Benchmarks (Google Colab & Cloud GPU)
+
+### Opción 1: Google Colab (Tesla T4 GPU Gratuita)
+
+Puedes abrir y ejecutar el notebook interactivo directamente o ejecutar el script runner en la terminal de Colab:
 
 ```bash
-# Exp01: Synthetic Gating Benchmark
-modal run modal_runner.py --exp exp01
+# 1. En Google Colab con GPU T4 habilitada:
+!git clone https://github.com/mcarbonell/spec-rama.git
+%cd spec-rama
+!pip install -q transformers datasets accelerate
 
-# Exp02: Head-to-Head WikiText-2 Test Set Benchmark
-modal run modal_runner.py --exp exp02
+# 2. Ejecutar EXP-11 (NF4 + SpecRAMA vs LoRA):
+!python run_colab.py --exp exp11 --steps 500
 
-# Exp03: Spectral Core Resolution Scaling Sweep
-modal run modal_runner.py --exp exp03
+# 3. Ejecutar EXP-12 (Barrido de LR en LoRA):
+!python run_colab.py --exp exp12 --steps 500
 
-# Exp04: Exact Iso-Parameter Head-to-Head Benchmark
-modal run modal_runner.py --exp exp04
+# 4. O ejecutar toda la suite completa:
+!python run_colab.py --exp all
+```
 
-# Exp05: 3.3-Bit Quantization Recovery Benchmark
-modal run modal_runner.py --exp exp05
+O abrir directamente el notebook interactivo [`colab_benchmark.ipynb`](./colab_benchmark.ipynb).
 
-# Exp06: Advanced Q-SpecPermuted Recovery Benchmark
-modal run modal_runner.py --exp exp06
+---
 
-# Exp07: Long-Horizon Q-Spec Convergence Benchmark
-modal run modal_runner.py --exp exp07
+### Opción 2: Modal Cloud GPU (A10G)
 
-# Exp08: NF4 + SpecRAMA Landmark Breakthrough Benchmark
-modal run modal_runner.py --exp exp08
-
-# Exp09: Asymmetric Heterogeneous Quantization Benchmark
-modal run modal_runner.py --exp exp09
-
-# Exp10: Unsparing 6-Arm Control Benchmark (Quantization vs Domain Adaptation)
-modal run modal_runner.py --exp exp10
-
-# Exp11: Proper Block-Wise NF4 Baseline & Head-to-Head LoRA Benchmark
+```bash
+# EXP-11: Proper Block-Wise NF4 Baseline & Head-to-Head LoRA
 modal run modal_runner.py --exp exp11
 
-# Exp12: LoRA Hyperparameter Sweep
+# EXP-12: LoRA Hyperparameter Sweep
 modal run modal_runner.py --exp exp12
 ```
