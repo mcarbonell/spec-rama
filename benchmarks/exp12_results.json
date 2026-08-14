@@ -1,0 +1,51 @@
+{
+  "experiment": "EXP-12",
+  "eval_tokens": 25600,
+  "eval_blocks": 100,
+  "full_test_set": false,
+  "num_steps": 500,
+  "sweep_results": [
+    {
+      "lr_max": 0.0001,
+      "alpha": 8.0,
+      "trainable_params": 589824,
+      "test_ppl": 33.38,
+      "bits_per_token": 5.061
+    },
+    {
+      "lr_max": 0.0005,
+      "alpha": 8.0,
+      "trainable_params": 589824,
+      "test_ppl": 29.23,
+      "bits_per_token": 4.869
+    },
+    {
+      "lr_max": 0.001,
+      "alpha": 8.0,
+      "trainable_params": 589824,
+      "test_ppl": 28.78,
+      "bits_per_token": 4.847
+    },
+    {
+      "lr_max": 0.002,
+      "alpha": 8.0,
+      "trainable_params": 589824,
+      "test_ppl": 29.02,
+      "bits_per_token": 4.859
+    },
+    {
+      "lr_max": 0.005,
+      "alpha": 8.0,
+      "trainable_params": 589824,
+      "test_ppl": 30.76,
+      "bits_per_token": 4.943
+    },
+    {
+      "lr_max": 0.01,
+      "alpha": 8.0,
+      "trainable_params": 589824,
+      "test_ppl": 33.22,
+      "bits_per_token": 5.054
+    }
+  ]
+}

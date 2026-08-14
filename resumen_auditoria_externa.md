@@ -149,4 +149,4 @@ Este documento consolida y sintetiza de manera exhaustiva todos los hallazgos t�
   - Actualizar tamaños reales: SpecRAMA $32\times 32$ (48 mód) = 393.2 kB; LoRA $r=4$ (48 mód) = 2.36 MB ($6.0\times$ ratio).
   - Clarificar tokens evaluados (especificar si es subset de 25.6k o test completo de 280k).
   - Documentar la naturaleza de fake-quantization en NF4.
-- [ ] **6. Re-ejecutar EXP-11 y EXP-12**: Obtener los números definitivos, limpios y reproducibles.
+- [x] **6. Re-ejecutar EXP-11 y EXP-12**: Obtener los números definitivos, limpios y reproducibles.

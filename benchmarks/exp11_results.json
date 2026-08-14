@@ -1,0 +1,93 @@
+{
+  "experiment": "EXP-11",
+  "eval_tokens": 25600,
+  "eval_blocks": 100,
+  "full_test_set": false,
+  "num_steps": 500,
+  "results": [
+    {
+      "arm": 1,
+      "name": "GPT-2 FP32 Native (Zero-Shot)",
+      "format": "FP32",
+      "trainable_params": 0,
+      "adapter_size": "0.0 KB",
+      "test_ppl": 46.18,
+      "bits_per_token": 5.529,
+      "delta_bpt_vs_native": 0.0,
+      "delta_bpt_vs_adapted": null,
+      "status": "Reference"
+    },
+    {
+      "arm": 2,
+      "name": "GPT-2 FP32 + SpecRAMA (Tuned)",
+      "format": "FP32",
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 35.96,
+      "bits_per_token": 5.168,
+      "delta_bpt_vs_native": -0.361,
+      "delta_bpt_vs_adapted": 0.0,
+      "status": "Adapted Upper Bound"
+    },
+    {
+      "arm": 3,
+      "name": "Block-Wise NF4 Base (Zero-Shot)",
+      "format": "4-bit NF4",
+      "trainable_params": 0,
+      "adapter_size": "0.0 KB",
+      "test_ppl": 49.34,
+      "bits_per_token": 5.625,
+      "delta_bpt_vs_native": 0.096,
+      "delta_bpt_vs_adapted": 0.456,
+      "status": "Proper Quantized Base"
+    },
+    {
+      "arm": 4,
+      "name": "Block-Wise NF4 + SpecRAMA (Tuned)",
+      "format": "4-bit NF4",
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 37.96,
+      "bits_per_token": 5.246,
+      "delta_bpt_vs_native": -0.283,
+      "delta_bpt_vs_adapted": 0.078,
+      "status": "SpecRAMA Quantized"
+    },
+    {
+      "arm": 5,
+      "name": "Block-Wise NF4 + LoRA (r=4 Tuned)",
+      "format": "4-bit NF4",
+      "trainable_params": 589824,
+      "adapter_size": "2.25 MB",
+      "test_ppl": 33.38,
+      "bits_per_token": 5.061,
+      "delta_bpt_vs_native": -0.468,
+      "delta_bpt_vs_adapted": -0.107,
+      "status": "Head-to-Head QLoRA"
+    },
+    {
+      "arm": 6,
+      "name": "Asymmetric NF3/4 Base (Zero-Shot)",
+      "format": "3.55-bit",
+      "trainable_params": 0,
+      "adapter_size": "0.0 KB",
+      "test_ppl": 60.45,
+      "bits_per_token": 5.918,
+      "delta_bpt_vs_native": 0.389,
+      "delta_bpt_vs_adapted": 0.749,
+      "status": "Quantized Base"
+    },
+    {
+      "arm": 7,
+      "name": "Asymmetric + SpecRAMA (Tuned)",
+      "format": "3.55-bit",
+      "trainable_params": 52224,
+      "adapter_size": "204.0 KB",
+      "test_ppl": 45.95,
+      "bits_per_token": 5.522,
+      "delta_bpt_vs_native": -0.007,
+      "delta_bpt_vs_adapted": 0.354,
+      "status": "Extreme Savings"
+    }
+  ]
+}
