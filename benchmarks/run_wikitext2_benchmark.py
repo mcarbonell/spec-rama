@@ -1,26 +1,27 @@
-import torch
-import torch.nn as nn
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from datasets import load_dataset
 import math
-import sys
 import os
+import sys
+
+import torch
+from datasets import load_dataset
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from spec_rama import (
-    inject_spec_rama_in_model,
-    SharedSpecRAMAModel,
     HierarchicalSpectralQuantizer,
+    SharedSpecRAMAModel,
     count_trainable_parameters,
+    inject_spec_rama_in_model,
     merge_spec_rama_modules,
 )
 from spec_rama.lora_baseline import inject_lora_in_model
 
+
 def prepare_wikitext_data(tokenizer, block_size=256, max_train_samples=200, max_test_samples=50):
     print("Loading WikiText-2-raw-v1 dataset from Hugging Face...")
     raw_datasets = load_dataset("wikitext", "wikitext-2-raw-v1")
-    
+
     def tokenize_function(examples):
         return tokenizer(examples["text"])
 
@@ -57,18 +58,18 @@ def evaluate_on_dataset(model, dataset, device="cuda", batch_size=4):
     model.eval()
     total_loss = 0.0
     total_tokens = 0
-    
+
     with torch.no_grad():
         for i in range(0, len(dataset), batch_size):
             batch = dataset[i : i + batch_size]
             input_ids = torch.tensor(batch["input_ids"]).to(device)
             labels = torch.tensor(batch["labels"]).to(device)
-            
+
             outputs = model(input_ids, labels=labels)
             tokens = input_ids.numel()
             total_loss += outputs.loss.item() * tokens
             total_tokens += tokens
-            
+
     avg_loss = total_loss / total_tokens if total_tokens > 0 else 0.0
     ppl = math.exp(avg_loss) if avg_loss < 20 else float('inf')
     return ppl, avg_loss
@@ -77,11 +78,11 @@ def evaluate_on_dataset(model, dataset, device="cuda", batch_size=4):
 def train_on_dataset(model, train_dataset, steps=200, lr=1e-3, device="cuda", batch_size=4):
     model.train()
     optimizer = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
-    
+
     dataset_size = len(train_dataset)
     step = 0
     epoch = 0
-    
+
     while step < steps:
         for i in range(0, dataset_size, batch_size):
             if step >= steps:
@@ -89,16 +90,16 @@ def train_on_dataset(model, train_dataset, steps=200, lr=1e-3, device="cuda", ba
             batch = train_dataset[i : i + batch_size]
             input_ids = torch.tensor(batch["input_ids"]).to(device)
             labels = torch.tensor(batch["labels"]).to(device)
-            
+
             optimizer.zero_grad()
             outputs = model(input_ids, labels=labels)
             loss = outputs.loss
             loss.backward()
             optimizer.step()
             step += 1
-            
+
         epoch += 1
-        
+
     return loss.item()
 
 
@@ -106,16 +107,16 @@ def run_wikitext2_benchmark(device="cuda", num_steps=200):
     print("==================================================================")
     print("   HEAD-TO-HEAD BENCHMARK: SPEC-RAMA VS. LORA ON WIKITEXT-2 TEST  ")
     print("==================================================================")
-    
+
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
-    
+
     train_data, test_data = prepare_wikitext_data(
         tokenizer, block_size=256, max_train_samples=400, max_test_samples=100
     )
-    
+
     targets = ["c_attn", "c_proj"]
-    
+
     # 1. GPT-2 Base FP32
     print("\n[1/6] Evaluating Base GPT-2 (FP32) on WikiText-2 TEST set...")
     model_base = GPT2LMHeadModel.from_pretrained("gpt2").to(device)
@@ -130,7 +131,7 @@ def run_wikitext2_benchmark(device="cuda", num_steps=200):
     inject_lora_in_model(model_lora, target_modules=targets, rank=8, alpha=16.0)
     model_lora = model_lora.to(device)
     lora_trainable, _, lora_ratio = count_trainable_parameters(model_lora)
-    
+
     train_on_dataset(model_lora, train_data, steps=num_steps, lr=1e-3, device=device)
     lora_test_ppl, _ = evaluate_on_dataset(model_lora, test_data, device=device)
     print(f"  -> LoRA (rank=8) | Trainable Params: {lora_trainable:,} ({lora_ratio:.4f}%) | TEST PPL: {lora_test_ppl:.2f}")
@@ -143,10 +144,10 @@ def run_wikitext2_benchmark(device="cuda", num_steps=200):
     inject_spec_rama_in_model(model_dct, target_modules=targets, transform_type="dct", core_size=(8, 8))
     model_dct = model_dct.to(device)
     dct_trainable, _, dct_ratio = count_trainable_parameters(model_dct)
-    
+
     train_on_dataset(model_dct, train_data, steps=num_steps, lr=1e-2, device=device)
     dct_test_ppl, _ = evaluate_on_dataset(model_dct, test_data, device=device)
-    
+
     merge_spec_rama_modules(model_dct)
     dct_merged_ppl, _ = evaluate_on_dataset(model_dct, test_data, device=device)
     print(f"  -> SpecRAMA (DCT) | Trainable Params: {dct_trainable:,} ({dct_ratio:.4f}%) | TEST PPL: {dct_test_ppl:.2f} | Merged PPL: {dct_merged_ppl:.2f}")
@@ -159,10 +160,10 @@ def run_wikitext2_benchmark(device="cuda", num_steps=200):
     inject_spec_rama_in_model(model_wav, target_modules=targets, transform_type="wavelet", core_size=(8, 8))
     model_wav = model_wav.to(device)
     wav_trainable, _, wav_ratio = count_trainable_parameters(model_wav)
-    
+
     train_on_dataset(model_wav, train_data, steps=num_steps, lr=1e-2, device=device)
     wav_test_ppl, _ = evaluate_on_dataset(model_wav, test_data, device=device)
-    
+
     merge_spec_rama_modules(model_wav)
     wav_merged_ppl, _ = evaluate_on_dataset(model_wav, test_data, device=device)
     print(f"  -> SpecRAMA (Wavelet) | Trainable Params: {wav_trainable:,} ({wav_ratio:.4f}%) | TEST PPL: {wav_test_ppl:.2f} | Merged PPL: {wav_merged_ppl:.2f}")
@@ -175,7 +176,7 @@ def run_wikitext2_benchmark(device="cuda", num_steps=200):
     model_shared = SharedSpecRAMAModel(model_shared_base, target_modules=targets, transform_type="dct", core_size=(8, 8))
     model_shared = model_shared.to(device)
     shared_trainable, _, shared_ratio = count_trainable_parameters(model_shared)
-    
+
     train_on_dataset(model_shared, train_data, steps=num_steps, lr=1e-2, device=device)
     shared_test_ppl, _ = evaluate_on_dataset(model_shared, test_data, device=device)
     print(f"  -> Shared Core (Sub-KB) | Trainable Params: {shared_trainable:,} ({shared_ratio:.5f}%) | TEST PPL: {shared_test_ppl:.2f}")
@@ -184,7 +185,7 @@ def run_wikitext2_benchmark(device="cuda", num_steps=200):
     print("\n[6/6] Evaluating SpecQuant (3.5-bit Hierarchical Zero-Shot Quantization)...")
     model_quant_base = GPT2LMHeadModel.from_pretrained("gpt2")
     quantizer = HierarchicalSpectralQuantizer(transform_type="dct", core_ratio=0.0625, core_bits=8, rest_bits=4)
-    
+
     # Quantize and reconstruct weights
     with torch.no_grad():
         for name, module in model_quant_base.named_modules():
@@ -194,7 +195,7 @@ def run_wikitext2_benchmark(device="cuda", num_steps=200):
                 w_rec_2d = quantizer.dequantize_matrix(payload)
                 w_rec = w_rec_2d.t() if module.__class__.__name__ == "Conv1D" else w_rec_2d
                 module.weight.copy_(w_rec)
-                
+
     model_quant = model_quant_base.to(device)
     quant_test_ppl, _ = evaluate_on_dataset(model_quant, test_data, device=device)
     print(f"  -> SpecQuant (3.5 bits/weight) TEST PPL: {quant_test_ppl:.2f}")
@@ -202,8 +203,8 @@ def run_wikitext2_benchmark(device="cuda", num_steps=200):
     print("\n==================================================================")
     print("             WIKITEXT-2 TEST SET BENCHMARK RESULTS                ")
     print("==================================================================")
-    print(f"| Model / Adaptation Method  | Trainable Params | % Total | TEST PPL | Merged PPL |")
-    print(f"|----------------------------|------------------|---------|----------|------------|")
+    print("| Model / Adaptation Method  | Trainable Params | % Total | TEST PPL | Merged PPL |")
+    print("|----------------------------|------------------|---------|----------|------------|")
     print(f"| GPT-2 Base (FP32)          | 124,439,808      | 100.00% | {base_test_ppl:8.2f} | N/A        |")
     print(f"| LoRA (rank=8, alpha=16)    | {lora_trainable:16,d} | {lora_ratio:6.3f}% | {lora_test_ppl:8.2f} | N/A        |")
     print(f"| SpecRAMA (DCT 8x8)         | {dct_trainable:16,d} | {dct_ratio:6.4f}% | {dct_test_ppl:8.2f} | {dct_merged_ppl:10.2f} |")

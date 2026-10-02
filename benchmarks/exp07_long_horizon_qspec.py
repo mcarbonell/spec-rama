@@ -1,25 +1,24 @@
+import math
+import os
+import sys
+
 import torch
 import torch.nn as nn
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from datasets import load_dataset
-import math
-import numpy as np
-import sys
-import os
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from spec_rama import (
-    SpecRAMALinear,
     HierarchicalSpectralQuantizer,
-    count_trainable_parameters,
-    merge_spec_rama_modules,
+    SpecRAMALinear,
 )
+
 
 def prepare_wikitext_data(tokenizer, block_size=256, max_train_samples=600, max_test_samples=100):
     print("Loading WikiText-2-raw-v1 dataset from Hugging Face...")
     raw_datasets = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1")
-    
+
     def tokenize_function(examples):
         return tokenizer(examples["text"])
 
@@ -56,18 +55,18 @@ def evaluate_on_dataset(model, dataset, device="cuda", batch_size=4):
     model.eval()
     total_loss = 0.0
     total_tokens = 0
-    
+
     with torch.no_grad():
         for i in range(0, len(dataset), batch_size):
             batch = dataset[i : i + batch_size]
             input_ids = torch.tensor(batch["input_ids"]).to(device)
             labels = torch.tensor(batch["labels"]).to(device)
-            
+
             outputs = model(input_ids, labels=labels)
             tokens = input_ids.numel()
             total_loss += outputs.loss.item() * tokens
             total_tokens += tokens
-            
+
     avg_loss = total_loss / total_tokens if total_tokens > 0 else 0.0
     ppl = math.exp(avg_loss) if avg_loss < 20 else float('inf')
     return ppl, avg_loss
@@ -77,10 +76,10 @@ def train_on_dataset_long_horizon(model, train_dataset, steps=500, lr_max=1e-2, 
     model.train()
     optimizer = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr_max)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=steps, eta_min=lr_min)
-    
+
     dataset_size = len(train_dataset)
     step = 0
-    
+
     while step < steps:
         for i in range(0, dataset_size, batch_size):
             if step >= steps:
@@ -88,7 +87,7 @@ def train_on_dataset_long_horizon(model, train_dataset, steps=500, lr_max=1e-2, 
             batch = train_dataset[i : i + batch_size]
             input_ids = torch.tensor(batch["input_ids"]).to(device)
             labels = torch.tensor(batch["labels"]).to(device)
-            
+
             optimizer.zero_grad()
             outputs = model(input_ids, labels=labels)
             loss = outputs.loss
@@ -96,7 +95,7 @@ def train_on_dataset_long_horizon(model, train_dataset, steps=500, lr_max=1e-2, 
             optimizer.step()
             scheduler.step()
             step += 1
-            
+
     return loss.item()
 
 
@@ -117,27 +116,27 @@ def quantize_and_inject_spec_rama_quantile(
         core_bits=8,
         rest_bits=rest_bits
     )
-    
+
     injected = []
-    
+
     def _inject(module: nn.Module):
         for name, child in list(module.named_children()):
             is_target = isinstance(child, nn.Linear) or child.__class__.__name__ in ["Conv1D", "Linear"]
             if is_target and any(target in name for target in target_modules):
                 w_fp32_2d = child.weight.data.t().clone() if child.__class__.__name__ == "Conv1D" else child.weight.data.clone()
-                
+
                 # Quantize FP32 weight
                 payload = quantizer.quantize_matrix(w_fp32_2d)
                 w_rec_2d = quantizer.dequantize_matrix(payload)
-                
+
                 # Channel-wise mean & variance rescaling alignment
                 mean_diff = w_fp32_2d.mean(dim=0, keepdim=True) - w_rec_2d.mean(dim=0, keepdim=True)
                 std_ratio = (w_fp32_2d.std(dim=0, keepdim=True) + 1e-6) / (w_rec_2d.std(dim=0, keepdim=True) + 1e-6)
                 w_rec_2d = (w_rec_2d + mean_diff) * std_ratio
-                
+
                 w_rec = w_rec_2d.t() if child.__class__.__name__ == "Conv1D" else w_rec_2d
                 child.weight.data.copy_(w_rec)
-                
+
                 wrapped = SpecRAMALinear(
                     child,
                     transform_type=transform_type,
@@ -150,7 +149,7 @@ def quantize_and_inject_spec_rama_quantile(
                 injected.append(wrapped)
             else:
                 _inject(child)
-                
+
     _inject(model)
     return injected
 
@@ -159,16 +158,16 @@ def run_exp07(device="cuda", num_steps=500):
     print("==================================================================")
     print("  [EXP-07] LONG-HORIZON (500 STEPS) Q-SPEC CONVERGENCE BENCHMARK  ")
     print("==================================================================")
-    
+
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
-    
+
     train_data, test_data = prepare_wikitext_data(
         tokenizer, block_size=256, max_train_samples=600, max_test_samples=100
     )
-    
+
     targets = ["c_attn", "c_proj"]
-    
+
     # 1. Base FP32 Model Reference
     model_base = GPT2LMHeadModel.from_pretrained("gpt2").to(device)
     base_test_ppl, _ = evaluate_on_dataset(model_base, test_data, device=device)
@@ -183,7 +182,7 @@ def run_exp07(device="cuda", num_steps=500):
     for m in inject_4b16:
         if m.core_m is not None: m.core_m.requires_grad = True
         if m.core_a is not None: m.core_a.requires_grad = True
-        
+
     step0_4b16, _ = evaluate_on_dataset(model_4b16, test_data, device=device)
     print(f"  -> 4.2-bit Step 0 TEST PPL: {step0_4b16:.2f}")
     train_on_dataset_long_horizon(model_4b16, train_data, steps=num_steps, lr_max=1e-2, lr_min=1e-3, device=device)
@@ -199,7 +198,7 @@ def run_exp07(device="cuda", num_steps=500):
     for m in inject_4b32:
         if m.core_m is not None: m.core_m.requires_grad = True
         if m.core_a is not None: m.core_a.requires_grad = True
-        
+
     step0_4b32, _ = evaluate_on_dataset(model_4b32, test_data, device=device)
     print(f"  -> 4.2-bit Step 0 (32x32) TEST PPL: {step0_4b32:.2f}")
     train_on_dataset_long_horizon(model_4b32, train_data, steps=num_steps, lr_max=1e-2, lr_min=1e-3, device=device)
@@ -215,7 +214,7 @@ def run_exp07(device="cuda", num_steps=500):
     for m in inject_3b32:
         if m.core_m is not None: m.core_m.requires_grad = True
         if m.core_a is not None: m.core_a.requires_grad = True
-        
+
     step0_3b32, _ = evaluate_on_dataset(model_3b32, test_data, device=device)
     print(f"  -> 3.3-bit Step 0 (32x32) TEST PPL: {step0_3b32:.2f}")
     train_on_dataset_long_horizon(model_3b32, train_data, steps=num_steps, lr_max=1e-2, lr_min=1e-3, device=device)
@@ -225,8 +224,8 @@ def run_exp07(device="cuda", num_steps=500):
     print("\n==================================================================")
     print("      EXP-07 LONG-HORIZON Q-SPEC CONVERGENCE SUMMARY              ")
     print("==================================================================")
-    print(f"| Model / Adaptation Method       | Base Bitwidth | Core Size | Step 0 PPL | Tuned (500s) | Status |")
-    print(f"|---------------------------------|---------------|-----------|------------|--------------|--------|")
+    print("| Model / Adaptation Method       | Base Bitwidth | Core Size | Step 0 PPL | Tuned (500s) | Status |")
+    print("|---------------------------------|---------------|-----------|------------|--------------|--------|")
     print(f"| GPT-2 Base (FP32)               | 32-bit FP32   | N/A       | {base_test_ppl:10.2f} | N/A          | Reference |")
     print(f"| SpecRAMA-Quant 4.2-bit Wavelet  | 4.25-bit avg  | 16x16     | {step0_4b16:10.2f} | {tuned_4b16:12.2f} | Converged |")
     print(f"| SpecRAMA-Quant 4.2-bit Wavelet  | 4.25-bit avg  | 32x32     | {step0_4b32:10.2f} | {tuned_4b32:12.2f} | Converged |")

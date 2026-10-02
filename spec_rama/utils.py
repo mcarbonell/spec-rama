@@ -1,8 +1,9 @@
-import torch
-import torch.nn as nn
 from typing import List, Tuple
+
+import torch.nn as nn
+
 from .layers import SpecRAMALinear
-from .shared_layers import SharedSpecRAMALinear
+
 
 def inject_spec_rama_in_model(
     model: nn.Module,
@@ -56,11 +57,33 @@ def inject_spec_rama_in_model(
 
 def merge_spec_rama_modules(model: nn.Module):
     """
-    Recursively calls merge() on all SpecRAMALinear and SharedSpecRAMALinear modules in a model.
+    Recursively calls merge() on all SpecRAMALinear and compatible spectral adaptation modules in a model.
     """
     for module in model.modules():
-        if isinstance(module, (SpecRAMALinear, SharedSpecRAMALinear)):
+        if hasattr(module, "merge") and callable(getattr(module, "merge")):
             module.merge()
+
+
+def unmerge_spec_rama_modules(model: nn.Module):
+    """
+    Recursively calls unmerge() on all SpecRAMALinear and compatible spectral adaptation modules in a model.
+    """
+    for module in model.modules():
+        if hasattr(module, "unmerge") and callable(getattr(module, "unmerge")):
+            module.unmerge()
+
+
+def assert_strictly_frozen_base(model: nn.Module, allowed_substrings: List[str]):
+    """
+    Validates that only parameters whose names contain any of allowed_substrings are trainable,
+    and all base model weights are strictly frozen with requires_grad=False.
+    Raises AssertionError if gradient leakage or unexpected frozen parameter is detected.
+    """
+    for name, param in model.named_parameters():
+        if any(sub in name for sub in allowed_substrings):
+            assert param.requires_grad, f"Expected trainable parameter is frozen: {name}"
+        else:
+            assert not param.requires_grad, f"Gradient leakage detected in base parameter: {name}"
 
 
 def count_trainable_parameters(model: nn.Module) -> Tuple[int, int, float]:

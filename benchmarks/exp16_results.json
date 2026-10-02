@@ -1,0 +1,220 @@
+{
+  "experiment": "EXP-16",
+  "eval_tokens": 512,
+  "eval_blocks": 2,
+  "full_test_set": false,
+  "num_steps": 1,
+  "seeds": [
+    42
+  ],
+  "results": [
+    {
+      "arm_id": 1,
+      "name": "Identity (None) x Wavelet (M+A)",
+      "perm_method": "none",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 48.76,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.608,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "Evaluates Wavelet without TSP ordering (baseline spectral)",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 48.75728628783727,
+          "bits_per_token": 5.607545926177134
+        }
+      ]
+    },
+    {
+      "arm_id": 2,
+      "name": "Random Permutation x Wavelet (M+A)",
+      "perm_method": "random",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 48.77,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.608,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "Shuffled control to prove TSP topology is non-trivial",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 48.76577301568435,
+          "bits_per_token": 5.607797020847395
+        }
+      ]
+    },
+    {
+      "arm_id": 3,
+      "name": "Bipartite TSP x Wavelet (M+A) [Full Spec-RAMA]",
+      "perm_method": "bipartite_tsp",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 48.89,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.611,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "Flagship Spec-RAMA Wavelet configuration",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 48.88953288158773,
+          "bits_per_token": 5.611453715970039
+        }
+      ]
+    },
+    {
+      "arm_id": 4,
+      "name": "Identity (None) x DCT (M+A) [FourierFT-like]",
+      "perm_method": "none",
+      "transform_type": "dct",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        16,
+        16
+      ],
+      "trainable_params": 24576,
+      "adapter_size": "96.0 KB",
+      "test_ppl": 48.83,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.61,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "DCT without TSP permutation",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 48.83401111199744,
+          "bits_per_token": 5.609814377342015
+        }
+      ]
+    },
+    {
+      "arm_id": 5,
+      "name": "Bipartite TSP x DCT (M+A)",
+      "perm_method": "bipartite_tsp",
+      "transform_type": "dct",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        16,
+        16
+      ],
+      "trainable_params": 24576,
+      "adapter_size": "96.0 KB",
+      "test_ppl": 48.99,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.614,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "Proves TSP benefit specifically on DCT",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 48.98504348690276,
+          "bits_per_token": 5.614269415929965
+        }
+      ]
+    },
+    {
+      "arm_id": 6,
+      "name": "Bipartite TSP x Walsh (M+A)",
+      "perm_method": "bipartite_tsp",
+      "transform_type": "walsh",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        16,
+        16
+      ],
+      "trainable_params": 24576,
+      "adapter_size": "96.0 KB",
+      "test_ppl": 48.77,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.608,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "Hadamard binary basis under TSP ordering",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 48.767889114863735,
+          "bits_per_token": 5.607859622532308
+        }
+      ]
+    },
+    {
+      "arm_id": 7,
+      "name": "Bipartite TSP x Wavelet (Multiplicative Only)",
+      "perm_method": "bipartite_tsp",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": false,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 49152,
+      "adapter_size": "192.0 KB",
+      "test_ppl": 48.85,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.61,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "Isolates multiplicative RAMA component (core_a = 0)",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 48.85305102238152,
+          "bits_per_token": 5.610376760610336
+        }
+      ]
+    },
+    {
+      "arm_id": 8,
+      "name": "Bipartite TSP x Wavelet (Additive Only)",
+      "perm_method": "bipartite_tsp",
+      "transform_type": "wavelet",
+      "use_multiplicative": false,
+      "use_additive": true,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 49152,
+      "adapter_size": "192.0 KB",
+      "test_ppl": 48.83,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.61,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "Isolates additive RAMA component (core_m = 0)",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 48.82944729453601,
+          "bits_per_token": 5.609679542943739
+        }
+      ]
+    }
+  ]
+}

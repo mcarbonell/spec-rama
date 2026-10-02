@@ -46,6 +46,7 @@ Se ejecutó un barrido completo de tasas de aprendizaje sobre GPT-2 Small cuanti
 ## 4. Conclusiones y Blindaje Académico
 
 1. **Eficiencia de Parámetros ($6.0\times$)**:
-   SpecRAMA Wavelet ($32\times 32$) opera con solo **98.304 parámetros (384 KB)** frente a los **589.824 parámetros (2.25 MB)** de LoRA ($r=4$), logrando una reducción de **$6.000\times$** con una perplejidad competitiva (**37.96 vs 33.38 PPL**).
+   SpecRAMA Wavelet ($32\times 32$) opera con solo **98.304 parámetros (384 KB)** frente a los **589.824 parámetros (2.25 MB)** de LoRA ($r=4$), logrando una reducción de **$6.0\times$** con una perplejidad competitiva (**37.96 vs 33.38 PPL**).
+
 2. **Estabilidad de Escalado Espectral de Parseval**:
    El escalado $\frac{\alpha}{\sqrt{k_{\text{out}} \cdot k_{\text{in}}} \cdot \text{std}(W_0)}$ normaliza los gradientes por la energía espectral de la matriz base, haciendo innecesario el ajuste manual de tasas de aprendizaje extremas.

@@ -1,0 +1,180 @@
+{
+  "experiment": "EXP-11",
+  "eval_tokens": 512,
+  "eval_blocks": 2,
+  "full_test_set": false,
+  "num_steps": 1,
+  "seeds": [
+    42,
+    1337
+  ],
+  "results": [
+    {
+      "arm": 1,
+      "name": "GPT-2 FP32 Native (Zero-Shot)",
+      "format": "FP32",
+      "trainable_params": 0,
+      "adapter_size": "0.0 KB",
+      "test_ppl": 45.6,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.511,
+      "bits_per_token_std": 0.0,
+      "delta_bpt_vs_native": 0.0,
+      "delta_bpt_vs_adapted": null,
+      "status": "Reference",
+      "runs": [
+        {
+          "seed": 42,
+          "ppl": 45.60234605017993,
+          "bpt": 5.511036141818961
+        }
+      ]
+    },
+    {
+      "arm": 2,
+      "name": "GPT-2 FP32 + SpecRAMA (Tuned)",
+      "format": "FP32",
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 45.63,
+      "test_ppl_std": 0.03,
+      "bits_per_token": 5.512,
+      "bits_per_token_std": 0.001,
+      "delta_bpt_vs_native": 0.001,
+      "delta_bpt_vs_adapted": 0.0,
+      "status": "Adapted Upper Bound",
+      "runs": [
+        {
+          "seed": 42,
+          "ppl": 45.66300024103777,
+          "bpt": 5.5129537483760815
+        },
+        {
+          "seed": 1337,
+          "ppl": 45.59610569287407,
+          "bpt": 5.51083870573577
+        }
+      ]
+    },
+    {
+      "arm": 3,
+      "name": "Block-Wise NF4 Base (Zero-Shot)",
+      "format": "4-bit NF4",
+      "trainable_params": 0,
+      "adapter_size": "0.0 KB",
+      "test_ppl": 48.82,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.609,
+      "bits_per_token_std": 0.0,
+      "delta_bpt_vs_native": 0.098,
+      "delta_bpt_vs_adapted": 0.098,
+      "status": "Proper Quantized Base",
+      "runs": [
+        {
+          "seed": 42,
+          "ppl": 48.82036749782617,
+          "bpt": 5.609411250008392
+        }
+      ]
+    },
+    {
+      "arm": 4,
+      "name": "Block-Wise NF4 + SpecRAMA (Tuned)",
+      "format": "4-bit NF4",
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 48.9,
+      "test_ppl_std": 0.01,
+      "bits_per_token": 5.612,
+      "bits_per_token_std": 0.0,
+      "delta_bpt_vs_native": 0.101,
+      "delta_bpt_vs_adapted": 0.1,
+      "status": "SpecRAMA Quantized",
+      "runs": [
+        {
+          "seed": 42,
+          "ppl": 48.88953288158773,
+          "bpt": 5.611453715970039
+        },
+        {
+          "seed": 1337,
+          "ppl": 48.909865474107846,
+          "bpt": 5.612053591456249
+        }
+      ]
+    },
+    {
+      "arm": 5,
+      "name": "Block-Wise NF4 + LoRA (r=4 Tuned)",
+      "format": "4-bit NF4",
+      "trainable_params": 589824,
+      "adapter_size": "2.25 MB",
+      "test_ppl": 48.8,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.609,
+      "bits_per_token_std": 0.0,
+      "delta_bpt_vs_native": 0.098,
+      "delta_bpt_vs_adapted": 0.097,
+      "status": "Head-to-Head QLoRA",
+      "runs": [
+        {
+          "seed": 42,
+          "ppl": 48.80172428680263,
+          "bpt": 5.608860217595028
+        },
+        {
+          "seed": 1337,
+          "ppl": 48.80435392138202,
+          "bpt": 5.608937953753218
+        }
+      ]
+    },
+    {
+      "arm": 6,
+      "name": "Asymmetric NF3/4 Base (Zero-Shot)",
+      "format": "3.55-bit",
+      "trainable_params": 0,
+      "adapter_size": "0.0 KB",
+      "test_ppl": 60.67,
+      "test_ppl_std": 0.0,
+      "bits_per_token": 5.923,
+      "bits_per_token_std": 0.0,
+      "delta_bpt_vs_native": 0.412,
+      "delta_bpt_vs_adapted": 0.411,
+      "status": "Quantized Base",
+      "runs": [
+        {
+          "seed": 42,
+          "ppl": 60.66990457895625,
+          "bpt": 5.92290913720306
+        }
+      ]
+    },
+    {
+      "arm": 7,
+      "name": "Asymmetric + SpecRAMA (Tuned)",
+      "format": "3.55-bit",
+      "trainable_params": 52224,
+      "adapter_size": "204.0 KB",
+      "test_ppl": 59.85,
+      "test_ppl_std": 0.21,
+      "bits_per_token": 5.903,
+      "bits_per_token_std": 0.005,
+      "delta_bpt_vs_native": 0.392,
+      "delta_bpt_vs_adapted": 0.391,
+      "status": "Extreme Savings",
+      "runs": [
+        {
+          "seed": 42,
+          "ppl": 59.64087947092381,
+          "bpt": 5.8982296268042465
+        },
+        {
+          "seed": 1337,
+          "ppl": 60.060687580214285,
+          "bpt": 5.908349085981015
+        }
+      ]
+    }
+  ]
+}

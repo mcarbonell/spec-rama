@@ -1,6 +1,6 @@
 # Auditoría Integral del Repositorio `spec-rama` y Plan de Remediación
 
-**Autor de la auditoría:** Antigravity AI  
+**Autor de la auditoría:** Antigravity AI  - Claude Opus 4.6  
 **Fecha:** 2 de Octubre de 2026  
 **Repositorio:** `mcarbonell/spec-rama`  
 **Autor del algoritmo:** Mario Raúl Carbonell Martínez  

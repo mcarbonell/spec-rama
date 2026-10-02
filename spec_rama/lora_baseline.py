@@ -1,14 +1,17 @@
+import math
+from typing import List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
-from typing import List
+
 
 class LoRALinear(nn.Module):
     """
     Standard LoRA (Low-Rank Adaptation) wrapper for linear / Conv1D layers.
     W_eff = W_0 + (alpha / rank) * (B @ A)
     """
+
     def __init__(
         self,
         base_layer: nn.Module,
@@ -19,14 +22,14 @@ class LoRALinear(nn.Module):
         self.base_layer = base_layer
         self.rank = rank
         self.scaling = alpha / rank
-        self.is_conv1d = (base_layer.__class__.__name__ == "Conv1D")
-        
+        self.is_conv1d = "Conv1D" in base_layer.__class__.__name__
+
         if self.is_conv1d:
             self.in_features = base_layer.weight.shape[0]
             self.out_features = base_layer.weight.shape[1]
         else:
-            self.in_features = getattr(base_layer, 'in_features', base_layer.weight.shape[1])
-            self.out_features = getattr(base_layer, 'out_features', base_layer.weight.shape[0])
+            self.in_features = getattr(base_layer, "in_features", base_layer.weight.shape[1])
+            self.out_features = getattr(base_layer, "out_features", base_layer.weight.shape[0])
 
         # Freeze base layer
         self.base_layer.weight.requires_grad = False
@@ -36,11 +39,12 @@ class LoRALinear(nn.Module):
         # Trainable low-rank matrices: A (rank x in_features), B (out_features x rank)
         self.lora_A = nn.Parameter(torch.zeros(rank, self.in_features))
         self.lora_B = nn.Parameter(torch.zeros(self.out_features, rank))
-        
+
         nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
         nn.init.zeros_(self.lora_B)
 
         self.merged = False
+        self.original_weight = None
 
     def get_effective_weight(self) -> torch.Tensor:
         w_base_2d = self.base_layer.weight.data.t().clone() if self.is_conv1d else self.base_layer.weight.clone()
@@ -51,9 +55,9 @@ class LoRALinear(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.merged:
             return self.base_layer(x)
-            
-        delta = torch.matmul(self.lora_B, self.lora_A) * self.scaling # (out_features, in_features)
-        
+
+        delta = torch.matmul(self.lora_B, self.lora_A) * self.scaling  # (out_features, in_features)
+
         if self.is_conv1d:
             # Conv1D in HF: x @ weight + bias + x @ delta.T
             out = self.base_layer(x) + torch.matmul(x, delta.t())
@@ -65,6 +69,7 @@ class LoRALinear(nn.Module):
     def merge(self):
         if self.merged:
             return
+        self.original_weight = self.base_layer.weight.data.clone()
         with torch.no_grad():
             w_base_2d = self.base_layer.weight.data.t() if self.is_conv1d else self.base_layer.weight.data
             delta = torch.matmul(self.lora_B, self.lora_A) * self.scaling
@@ -72,6 +77,14 @@ class LoRALinear(nn.Module):
             w_eff = w_eff_2d.t() if self.is_conv1d else w_eff_2d
             self.base_layer.weight.copy_(w_eff)
         self.merged = True
+
+    def unmerge(self):
+        if not self.merged:
+            return
+        if self.original_weight is not None:
+            self.base_layer.weight.data.copy_(self.original_weight)
+            self.original_weight = None
+        self.merged = False
 
 
 def inject_lora_in_model(
@@ -91,6 +104,7 @@ def inject_lora_in_model(
             p.requires_grad = False
 
     injected = []
+
     def _inject(module: nn.Module):
         for name, child in list(module.named_children()):
             is_target = isinstance(child, nn.Linear) or child.__class__.__name__ in ["Conv1D", "Linear"]
@@ -103,5 +117,6 @@ def inject_lora_in_model(
                 injected.append(wrapped)
             else:
                 _inject(child)
+
     _inject(model)
     return injected

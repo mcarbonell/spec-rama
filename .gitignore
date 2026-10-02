@@ -21,9 +21,17 @@ wheels/
 .installed.cfg
 *.egg
 
+# Testing & Quality
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
 # Virtual Environment
 venv/
 ENV/
+.venv/
 
 # IDE
 .vscode/

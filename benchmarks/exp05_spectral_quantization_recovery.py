@@ -1,24 +1,25 @@
-import torch
-import torch.nn as nn
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from datasets import load_dataset
 import math
-import sys
 import os
+import sys
+
+import torch
+from datasets import load_dataset
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from spec_rama import (
-    inject_spec_rama_in_model,
     HierarchicalSpectralQuantizer,
     count_trainable_parameters,
+    inject_spec_rama_in_model,
     merge_spec_rama_modules,
 )
+
 
 def prepare_wikitext_data(tokenizer, block_size=256, max_train_samples=400, max_test_samples=100):
     print("Loading WikiText-2-raw-v1 dataset from Hugging Face...")
     raw_datasets = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1")
-    
+
     def tokenize_function(examples):
         return tokenizer(examples["text"])
 
@@ -55,18 +56,18 @@ def evaluate_on_dataset(model, dataset, device="cuda", batch_size=4):
     model.eval()
     total_loss = 0.0
     total_tokens = 0
-    
+
     with torch.no_grad():
         for i in range(0, len(dataset), batch_size):
             batch = dataset[i : i + batch_size]
             input_ids = torch.tensor(batch["input_ids"]).to(device)
             labels = torch.tensor(batch["labels"]).to(device)
-            
+
             outputs = model(input_ids, labels=labels)
             tokens = input_ids.numel()
             total_loss += outputs.loss.item() * tokens
             total_tokens += tokens
-            
+
     avg_loss = total_loss / total_tokens if total_tokens > 0 else 0.0
     ppl = math.exp(avg_loss) if avg_loss < 20 else float('inf')
     return ppl, avg_loss
@@ -75,10 +76,10 @@ def evaluate_on_dataset(model, dataset, device="cuda", batch_size=4):
 def train_on_dataset(model, train_dataset, steps=200, lr=1e-2, device="cuda", batch_size=4):
     model.train()
     optimizer = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
-    
+
     dataset_size = len(train_dataset)
     step = 0
-    
+
     while step < steps:
         for i in range(0, dataset_size, batch_size):
             if step >= steps:
@@ -86,14 +87,14 @@ def train_on_dataset(model, train_dataset, steps=200, lr=1e-2, device="cuda", ba
             batch = train_dataset[i : i + batch_size]
             input_ids = torch.tensor(batch["input_ids"]).to(device)
             labels = torch.tensor(batch["labels"]).to(device)
-            
+
             optimizer.zero_grad()
             outputs = model(input_ids, labels=labels)
             loss = outputs.loss
             loss.backward()
             optimizer.step()
             step += 1
-            
+
     return loss.item()
 
 
@@ -122,16 +123,16 @@ def run_exp05(device="cuda", num_steps=200):
     print("==================================================================")
     print("  [EXP-05] 3-BIT SPECTRAL QUANTIZATION RECOVERY VIA SPEC-RAMA     ")
     print("==================================================================")
-    
+
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
-    
+
     train_data, test_data = prepare_wikitext_data(
         tokenizer, block_size=256, max_train_samples=400, max_test_samples=100
     )
-    
+
     targets = ["c_attn", "c_proj"]
-    
+
     # 1. Base FP32 Model
     print("\n[1/5] Evaluating Base GPT-2 (FP32) on WikiText-2 TEST set...")
     model_base = GPT2LMHeadModel.from_pretrained("gpt2").to(device)
@@ -155,10 +156,10 @@ def run_exp05(device="cuda", num_steps=200):
     inject_spec_rama_in_model(model_dct_q, target_modules=targets, transform_type="dct", core_size=(8, 8))
     model_dct_q = model_dct_q.to(device)
     trainable_dct, _, ratio_dct = count_trainable_parameters(model_dct_q)
-    
+
     train_on_dataset(model_dct_q, train_data, steps=num_steps, lr=1e-2, device=device)
     dct_rec_ppl, _ = evaluate_on_dataset(model_dct_q, test_data, device=device)
-    
+
     merge_spec_rama_modules(model_dct_q)
     dct_merged_ppl, _ = evaluate_on_dataset(model_dct_q, test_data, device=device)
     print(f"  -> SpecRAMA-Quant DCT (8x8) | Trainable: {trainable_dct:,} ({ratio_dct:.4f}%) | TEST PPL: {dct_rec_ppl:.2f} | Merged PPL: {dct_merged_ppl:.2f}")
@@ -172,10 +173,10 @@ def run_exp05(device="cuda", num_steps=200):
     inject_spec_rama_in_model(model_wav_q, target_modules=targets, transform_type="wavelet", core_size=(8, 8))
     model_wav_q = model_wav_q.to(device)
     trainable_wav, _, ratio_wav = count_trainable_parameters(model_wav_q)
-    
+
     train_on_dataset(model_wav_q, train_data, steps=num_steps, lr=1e-2, device=device)
     wav_rec_ppl, _ = evaluate_on_dataset(model_wav_q, test_data, device=device)
-    
+
     merge_spec_rama_modules(model_wav_q)
     wav_merged_ppl, _ = evaluate_on_dataset(model_wav_q, test_data, device=device)
     print(f"  -> SpecRAMA-Quant Wavelet (8x8) | Trainable: {trainable_wav:,} ({ratio_wav:.4f}%) | TEST PPL: {wav_rec_ppl:.2f} | Merged PPL: {wav_merged_ppl:.2f}")
@@ -189,10 +190,10 @@ def run_exp05(device="cuda", num_steps=200):
     inject_spec_rama_in_model(model_wav16_q, target_modules=targets, transform_type="wavelet", core_size=(16, 16))
     model_wav16_q = model_wav16_q.to(device)
     trainable_w16, _, ratio_w16 = count_trainable_parameters(model_wav16_q)
-    
+
     train_on_dataset(model_wav16_q, train_data, steps=num_steps, lr=1e-2, device=device)
     w16_rec_ppl, _ = evaluate_on_dataset(model_wav16_q, test_data, device=device)
-    
+
     merge_spec_rama_modules(model_wav16_q)
     w16_merged_ppl, _ = evaluate_on_dataset(model_wav16_q, test_data, device=device)
     print(f"  -> SpecRAMA-Quant Wavelet (16x16) | Trainable: {trainable_w16:,} ({ratio_w16:.4f}%) | TEST PPL: {w16_rec_ppl:.2f} | Merged PPL: {w16_merged_ppl:.2f}")
@@ -200,8 +201,8 @@ def run_exp05(device="cuda", num_steps=200):
     print("\n==================================================================")
     print("      EXP-05 3-BIT SPECTRAL QUANTIZATION RECOVERY SUMMARY         ")
     print("==================================================================")
-    print(f"| Model / Adaptation Method       | Base Bitwidth | Trainable Params | TEST PPL | Merged PPL | Status |")
-    print(f"|---------------------------------|---------------|------------------|----------|------------|--------|")
+    print("| Model / Adaptation Method       | Base Bitwidth | Trainable Params | TEST PPL | Merged PPL | Status |")
+    print("|---------------------------------|---------------|------------------|----------|------------|--------|")
     print(f"| GPT-2 Base (FP32)               | 32-bit FP32   | 124,439,808      | {base_test_ppl:8.2f} | N/A        | Reference |")
     print(f"| SpecQuant 3.3-bit Zero-Shot     | 3.31-bit avg  | 0 (Quantized)    | {zero_shot_3bit_ppl:8.2f} | N/A        | Collapsed |")
     print(f"| SpecRAMA-Quant DCT (8x8)        | 3.31-bit avg  | {trainable_dct:16,d} | {dct_rec_ppl:8.2f} | {dct_merged_ppl:10.2f} | Recovered |")

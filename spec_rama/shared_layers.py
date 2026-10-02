@@ -1,8 +1,11 @@
+from typing import List, Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple, List, Optional
+
 from .layers import SpecRAMALinear
+
 
 class SharedSpecRAMALinear(nn.Module):
     """
@@ -10,6 +13,7 @@ class SharedSpecRAMALinear(nn.Module):
     References a single global master spectral core shared across multiple layers,
     and learns layer-specific scalar gains (gamma_m, gamma_a).
     """
+
     def __init__(
         self,
         base_layer: nn.Module,
@@ -33,17 +37,17 @@ class SharedSpecRAMALinear(nn.Module):
             use_multiplicative=False,
             use_additive=False,
         )
-        
+
         # References to global master cores
         self.master_core_m = master_core_m
         self.master_core_a = master_core_a
-        
+
         # Layer-specific scalar gains (initialized to 1.0)
         if master_core_m is not None:
             self.gamma_m = nn.Parameter(torch.tensor(1.0))
         else:
             self.register_parameter("gamma_m", None)
-            
+
         if master_core_a is not None:
             self.gamma_a = nn.Parameter(torch.tensor(1.0))
         else:
@@ -52,15 +56,12 @@ class SharedSpecRAMALinear(nn.Module):
     def get_effective_weight(self) -> torch.Tensor:
         core_m_scaled = (self.master_core_m * self.gamma_m) if self.master_core_m is not None else None
         core_a_scaled = (self.master_core_a * self.gamma_a) if self.master_core_a is not None else None
-        return self.spec_layer.get_effective_weight(
-            custom_core_m=core_m_scaled,
-            custom_core_a=core_a_scaled
-        )
+        return self.spec_layer.get_effective_weight(custom_core_m=core_m_scaled, custom_core_a=core_a_scaled)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.spec_layer.merged:
             return self.spec_layer.base_layer(x)
-            
+
         w_eff = self.get_effective_weight()
         if self.spec_layer.is_conv1d:
             out = torch.matmul(x, w_eff)
@@ -71,11 +72,22 @@ class SharedSpecRAMALinear(nn.Module):
             return F.linear(x, w_eff, self.spec_layer.base_layer.bias)
 
     def merge(self):
+        """Merges shared spectral adaptation in-place into base weights."""
         if self.spec_layer.merged:
             return
+        self.spec_layer.original_weight = self.spec_layer.base_layer.weight.data.clone()
         w_eff = self.get_effective_weight()
         self.spec_layer.base_layer.weight.data.copy_(w_eff)
         self.spec_layer.merged = True
+
+    def unmerge(self):
+        """Restores base weights prior to merge."""
+        if not self.spec_layer.merged:
+            return
+        if self.spec_layer.original_weight is not None:
+            self.spec_layer.base_layer.weight.data.copy_(self.spec_layer.original_weight)
+            self.spec_layer.original_weight = None
+        self.spec_layer.merged = False
 
 
 class SharedSpecRAMAModel(nn.Module):
@@ -84,6 +96,7 @@ class SharedSpecRAMAModel(nn.Module):
     Total trainable parameters = 1 Master Core (e.g. 8x8 = 64 params) + 2 * (Number of Layers) gains.
     True Sub-Kilobyte PEFT!
     """
+
     def __init__(
         self,
         model: nn.Module,
@@ -98,7 +111,7 @@ class SharedSpecRAMAModel(nn.Module):
         super().__init__()
         self.model = model
         self.target_modules = target_modules
-        
+
         if freeze_base:
             for p in model.parameters():
                 p.requires_grad = False
@@ -106,8 +119,8 @@ class SharedSpecRAMAModel(nn.Module):
         # Master Cores (shared globally)
         self.master_core_m = nn.Parameter(torch.zeros(*core_size))
         self.master_core_a = nn.Parameter(torch.zeros(*core_size))
-        
-        self.shared_layers: List[SharedSpecRAMALinear] = []
+
+        self.shared_layers = nn.ModuleList()
         self._inject_shared_cores(self.model, transform_type, core_size, alpha_m, alpha_a, permutation_method)
 
     def _inject_shared_cores(self, module, transform_type, core_size, alpha_m, alpha_a, permutation_method):
@@ -135,3 +148,7 @@ class SharedSpecRAMAModel(nn.Module):
     def merge(self):
         for layer in self.shared_layers:
             layer.merge()
+
+    def unmerge(self):
+        for layer in self.shared_layers:
+            layer.unmerge()
