@@ -224,6 +224,26 @@ def run_exp16(
             "core": (32, 32),
             "hypothesis": "Evaluates spectral SVD ordination vs metric TSP",
         },
+        {
+            "id": 11,
+            "name": "k-Alternatives TSP x Wavelet (M+A)",
+            "perm": "k_alternatives_tsp",
+            "transform": "wavelet",
+            "mult": True,
+            "add": True,
+            "core": (32, 32),
+            "hypothesis": "Evaluates k-Alternatives LDS search with RL-style heuristic promotion vs Greedy TSP",
+        },
+        {
+            "id": 12,
+            "name": "Ripple Insertion TSP x Wavelet (M+A)",
+            "perm": "ripple_tsp",
+            "transform": "wavelet",
+            "mult": True,
+            "add": True,
+            "core": (32, 32),
+            "hypothesis": "Evaluates Ripple Insertion with wavefront relaxation and 2-opt vs Greedy TSP",
+        },
     ]
 
     if arm_ids is not None:

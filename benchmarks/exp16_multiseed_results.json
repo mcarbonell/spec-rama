@@ -59,8 +59,8 @@
       "runs": [
         {
           "seed": 42,
-          "test_ppl": 36.42603529629175,
-          "bits_per_token": 5.186898071860749
+          "test_ppl": 36.42603366005459,
+          "bits_per_token": 5.186898007055691
         },
         {
           "seed": 1337,
@@ -69,8 +69,8 @@
         },
         {
           "seed": 2026,
-          "test_ppl": 36.43416030879339,
-          "bits_per_token": 5.187219836445499
+          "test_ppl": 36.43416024584715,
+          "bits_per_token": 5.187219833952997
         }
       ]
     },
@@ -107,6 +107,78 @@
           "seed": 2026,
           "test_ppl": 37.555607306626136,
           "bits_per_token": 5.230956422853638
+        }
+      ]
+    },
+    {
+      "arm_id": 11,
+      "name": "k-Alternatives TSP x Wavelet (M+A)",
+      "perm_method": "k_alternatives_tsp",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 36.68,
+      "test_ppl_std": 0.02,
+      "bits_per_token": 5.197,
+      "bits_per_token_std": 0.001,
+      "hypothesis": "Evaluates k-Alternatives LDS search with RL-style heuristic promotion vs Greedy TSP",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 36.66269979287584,
+          "bits_per_token": 5.196241122837702
+        },
+        {
+          "seed": 1337,
+          "test_ppl": 36.666992764076916,
+          "bits_per_token": 5.196410043449629
+        },
+        {
+          "seed": 2026,
+          "test_ppl": 36.71552449307045,
+          "bits_per_token": 5.198318304369801
+        }
+      ]
+    },
+    {
+      "arm_id": 12,
+      "name": "Ripple Insertion TSP x Wavelet (M+A)",
+      "perm_method": "ripple_tsp",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 38.26,
+      "test_ppl_std": 0.03,
+      "bits_per_token": 5.258,
+      "bits_per_token_std": 0.001,
+      "hypothesis": "Evaluates Ripple Insertion with wavefront relaxation and 2-opt vs Greedy TSP",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 38.2866256003763,
+          "bits_per_token": 5.258768608454178
+        },
+        {
+          "seed": 1337,
+          "test_ppl": 38.219406748599916,
+          "bits_per_token": 5.256233479495368
+        },
+        {
+          "seed": 2026,
+          "test_ppl": 38.26892229244872,
+          "bits_per_token": 5.258101368111375
         }
       ]
     }

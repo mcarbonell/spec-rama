@@ -168,6 +168,20 @@ def main(
     if result is not None:
         filename = f"{exp}_multiseed_results.json" if "," in seeds else f"{exp}_results.json"
         local_path = os.path.join(os.path.dirname(__file__), "benchmarks", filename)
+        final_results = result
+        if os.path.exists(local_path):
+            try:
+                with open(local_path, "r", encoding="utf-8") as f:
+                    old_data = json.load(f)
+                old_map = {r["arm_id"]: r for r in old_data.get("results", []) if "arm_id" in r}
+                for r in result:
+                    if "arm_id" in r:
+                        old_map[r["arm_id"]] = r
+                if old_map:
+                    final_results = sorted(list(old_map.values()), key=lambda x: x["arm_id"])
+            except Exception:
+                final_results = result
+
         with open(local_path, "w", encoding="utf-8") as f:
-            json.dump({"experiment": exp.upper(), "seeds": seeds, "results": result}, f, indent=2)
+            json.dump({"experiment": exp.upper(), "seeds": seeds, "results": final_results}, f, indent=2)
         print(f"\n[Local] Saved remote results to: {local_path}")

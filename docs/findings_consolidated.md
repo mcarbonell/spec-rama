@@ -78,6 +78,23 @@ Target adaptation layers: Attention projection matrices (`c_attn`, `c_proj` acro
 | **Asymmetric NF3/4 Base (Zero-Shot)** | 3.55-bit | 0 | 0.00% | 0 KB | $57.54 \pm 0.00$ | $5.846 \pm 0.000$ | +0.400 bpt |
 | **Asymmetric + Spec-RAMA (Tuned)** | 3.55-bit | 52,224 | 0.042% | 204 KB | $44.31 \pm 0.02$ | $5.470 \pm 0.001$ | +0.024 bpt |
 
+### 2.3 EXP-16 Causal Factorial Ablation Matrix (Full Test Set: 282,624 tokens, Seeds: 42, 1337, 2026)
+
+| Arm | Permutation Strategy | Transform | Modulation | Trainable Params | Test PPL ($\mu \pm \sigma$) | Bits/Token ($\mu \pm \sigma$) | Hypothesis / Finding |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1** | None (Identity) | Wavelet | M+A | 98,304 | $38.58 \pm 0.02$ | $5.270 \pm 0.001$ | Baseline unordered spectral Wavelet |
+| **2** | Random Shuffle | Wavelet | M+A | 98,304 | $38.55 \pm 0.12$ | $5.269 \pm 0.005$ | Shuffled control (proves TSP topology is non-trivial) |
+| **3** | **2D Bipartite TSP** | **Wavelet** | **M+A** | **98,304** | $\mathbf{36.44 \pm 0.03}$ | $\mathbf{5.187 \pm 0.001}$ | Alternating 2D manifold optimization ($\Delta = -2.14$ PPL) |
+| **4** | None (Identity) | DCT | M+A | 24,576 | $39.34 \pm 0.02$ | $5.298 \pm 0.001$ | FourierFT-like baseline without permutation |
+| **5** | 2D Bipartite TSP | DCT | M+A | 24,576 | $39.30 \pm 0.02$ | $5.296 \pm 0.001$ | Proves TSP ordering benefits DCT representations |
+| **6** | 2D Bipartite TSP | Walsh | M+A | 24,576 | $39.52 \pm 0.02$ | $5.304 \pm 0.001$ | Discrete binary Hadamard basis under TSP topology |
+| **7** | 2D Bipartite TSP | Wavelet | Mult-Only | 49,152 | $37.58 \pm 0.04$ | $5.232 \pm 0.002$ | Multiplicative scaling is primary driver of spectral adaptation |
+| **8** | 2D Bipartite TSP | Wavelet | Add-Only | 49,152 | $39.95 \pm 0.01$ | $5.320 \pm 0.000$ | Additive alone is insufficient without multiplicative scaling |
+| **9** | **1D Greedy TSP** | **Wavelet** | **M+A** | **98,304** | $\mathbf{36.43 \pm 0.01}$ | $\mathbf{5.187 \pm 0.000}$ | Direct open-path nearest neighbor TSP |
+| **10** | PCA / SVD Ordination | Wavelet | M+A | 98,304 | $37.45 \pm 0.10$ | $5.227 \pm 0.004$ | First-component PCA ordination (+1.02 PPL worse than TSP) |
+| **11** | **k-Alternatives TSP** | **Wavelet** | **M+A** | **98,304** | $\mathbf{36.68 \pm 0.02}$ | $\mathbf{5.197 \pm 0.001}$ | LDS exploration with RL policy update (beats PCA by 0.77 PPL) |
+| **12** | **Ripple Insertion TSP** | **Wavelet** | **M+A** | **98,304** | $38.26 \pm 0.03$ | $5.258 \pm 0.001$ | Dynamic insertion + wavefront relaxation + 2-opt |
+
 ---
 
 ## 3. Key Scientific Insights

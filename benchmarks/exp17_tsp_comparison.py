@@ -25,20 +25,18 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
-import numpy as np
 from transformers import GPT2Model
 
 from spec_rama.permutation import (
     compute_2d_permutations,
-    compute_total_variation_2d,
     compute_greedy_tsp_1d,
     compute_pca_permutation,
+    compute_total_variation_2d,
 )
-from spec_rama.permutation_ripple import compute_joint_bipartite_ripple_permutation, compute_ripple_tsp_1d
 from spec_rama.permutation_k_alternatives import (
     compute_joint_bipartite_k_alternatives_permutation,
-    compute_k_alternatives_tsp_1d,
 )
+from spec_rama.permutation_ripple import compute_joint_bipartite_ripple_permutation
 from spec_rama.transforms import haar_dwt_2d
 
 
@@ -52,9 +50,9 @@ def compute_wavelet_energy_ratio(matrix: torch.Tensor, core_h: int = 32, core_w:
 
 
 def benchmark_matrix(name: str, weight: torch.Tensor):
-    print(f"\n=======================================================")
+    print("\n=======================================================")
     print(f" Matrix: {name} | Shape: {tuple(weight.shape)}")
-    print(f"=======================================================")
+    print("=======================================================")
 
     methods = [
         ("None (Original)", "none"),
@@ -67,7 +65,6 @@ def benchmark_matrix(name: str, weight: torch.Tensor):
     ]
 
     base_tv = compute_total_variation_2d(weight)
-    base_energy = compute_wavelet_energy_ratio(weight)
 
     results = []
 

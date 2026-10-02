@@ -165,6 +165,38 @@
       "bits_per_token": 5.227,
       "bits_per_token_std": 0.004,
       "hypothesis": "Evaluates spectral SVD ordination vs metric TSP"
+    },
+    {
+      "arm_id": 11,
+      "name": "k-Alternatives TSP x Wavelet (M+A)",
+      "perm_method": "k_alternatives_tsp",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [32, 32],
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 36.68,
+      "test_ppl_std": 0.02,
+      "bits_per_token": 5.197,
+      "bits_per_token_std": 0.001,
+      "hypothesis": "Evaluates k-Alternatives LDS search with RL-style heuristic promotion vs Greedy TSP"
+    },
+    {
+      "arm_id": 12,
+      "name": "Ripple Insertion TSP x Wavelet (M+A)",
+      "perm_method": "ripple_tsp",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [32, 32],
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 38.26,
+      "test_ppl_std": 0.03,
+      "bits_per_token": 5.258,
+      "bits_per_token_std": 0.001,
+      "hypothesis": "Evaluates Ripple Insertion with wavefront relaxation and 2-opt vs Greedy TSP"
     }
   ]
 }
