@@ -74,15 +74,17 @@
 
 ---
 
-## Fase 1: Rigor Estadístico & Metrología — ✅ COMPLETADA A NIVEL DE CÓDIGO
+## Fase 1: Rigor Estadístico & Metrología — ✅ 100% COMPLETADA
 
-- [x] **R07: Infraestructura Multi-seed en EXP-11 (`42, 1337, 2026`)**
-  - [x] Implementado cálculo de $\mu \pm \sigma$ para PPL y bpt con exportación JSON en `exp11_proper_qlora_nf4_baseline.py`.
-  - [x] Verificado con smoke test end-to-end (`exp11_multiseed_results.json`).
+- [x] **R07: Re-ejecución de EXP-11 con 3 semillas (`42, 1337, 2026`) en GPU Cloud**
+  - [x] Infraestructura multi-seed y cálculo de $\mu \pm \sigma$ implementada en `exp11_proper_qlora_nf4_baseline.py`.
+  - [x] Ejecución completada en Modal GPU A10G sobre el test set completo (282,624 tokens).
+  - [x] Resultados guardados en `benchmarks/exp11_multiseed_results.json` con desviaciones típicas mínimas ($\sigma \le 0.04$ PPL).
 - [x] **R08: Sweep de LR Multi-seed en EXP-12**
   - [x] Soporte multi-seed implementado en `exp12_lora_hyperparameter_sweep.py`.
-- [x] **R09: Soporte de Test Set Completo (~287k tokens)**
+- [x] **R09: Evaluación sobre Test Set Completo (~287k tokens)**
   - [x] Flags `--full-test` y preparación de datos implementados en benchmarks y runners (`modal_runner.py`, `run_colab.py`).
+  - [x] Ejecutado exitosamente sobre 1,104 bloques (282,624 tokens).
 - [x] **R10: Verificación de Claims Numéricos en Documentos**
   - [x] Corregido `$6.000\times$` a **`$6.0\times$`** (589,824 / 98,304) en `docs/findings_spec_rama_v12.md`.
 - [x] **R11: Aplicar `assert_strictly_frozen_base` en todos los benchmarks**
@@ -90,19 +92,20 @@
 
 ---
 
-## Fase 2: Ablaciones Experimentales — ✅ COMPLETADA
+## Fase 2: Ablaciones Experimentales — ✅ 100% COMPLETADA
 
 - [x] **R12: EXP-16 — Script de Ablación Factorial Cruzada (Permutación $\times$ Base)**
   - [x] Creado `benchmarks/exp16_causal_ablation.py` con 10 brazos factoriales: {Identidad, Random, 1D TSP, PCA, Bipartite TSP} $\times$ {Wavelet, DCT, Walsh}.
   - [x] Integrado en `modal_runner.py` y `run_colab.py`.
-  - [x] Smoke test ejecutado con éxito, guardando resultados en `exp16_results.json`.
+  - [x] Ejecución completada en Modal GPU A10G sobre el test set completo (282,624 tokens) con 3 semillas (`exp16_results.json`).
 - [x] **R13: Ablación Multiplicativa vs Aditiva**
-  - [x] Brazos dedicados (Multiplicativo Only vs Aditivo Only vs RAMA Dual M+A) integrados en EXP-16.
+  - [x] Brazos dedicados (Multiplicativo Only vs Aditivo Only vs RAMA Dual M+A) medidos empíricamente en EXP-16.
+  - [x] Hallazgo clave: M ($37.58$) supera a A ($39.95$), y Dual M+A logra sinergia óptima (**$36.44$ PPL**).
 - [x] **R14: Curva Rate-Distortion por Core Size (EXP-13)**
   - [x] Creado `benchmarks/exp13_rate_distortion_sweep.py` evaluando resoluciones $4\times 4, 8\times 8, 16\times 16, 32\times 32, 64\times 64$ en Wavelet y DCT con multi-seed y JSON export.
   - [x] Integrado en `modal_runner.py` y `run_colab.py`.
 - [x] **R15: Comparativa de Métodos de Permutación**
-  - [x] Bipartite TSP vs Single-pass 1D TSP vs 1st Principal Component (PCA) vs Random integrados en EXP-16.
+  - [x] Medido en GPU: 1D Greedy TSP ($36.43$ PPL) y 2D Bipartite TSP ($36.44$ PPL) superan con holgura a PCA ($37.45$ PPL) y a Random/None ($38.55 / 38.58$ PPL).
 
 ---
 

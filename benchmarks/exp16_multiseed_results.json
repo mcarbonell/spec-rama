@@ -1,0 +1,114 @@
+{
+  "experiment": "EXP16",
+  "seeds": "42,1337,2026",
+  "results": [
+    {
+      "arm_id": 8,
+      "name": "Bipartite TSP x Wavelet (Additive Only)",
+      "perm_method": "bipartite_tsp",
+      "transform_type": "wavelet",
+      "use_multiplicative": false,
+      "use_additive": true,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 49152,
+      "adapter_size": "192.0 KB",
+      "test_ppl": 39.95,
+      "test_ppl_std": 0.01,
+      "bits_per_token": 5.32,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "Isolates additive RAMA component (core_m = 0)",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 39.94770076912939,
+          "bits_per_token": 5.320040564638054
+        },
+        {
+          "seed": 1337,
+          "test_ppl": 39.93987517057573,
+          "bits_per_token": 5.319757918628868
+        },
+        {
+          "seed": 2026,
+          "test_ppl": 39.95721095689797,
+          "bits_per_token": 5.320383980343048
+        }
+      ]
+    },
+    {
+      "arm_id": 9,
+      "name": "Single-Pass 1D TSP x Wavelet (M+A)",
+      "perm_method": "tsp",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 36.43,
+      "test_ppl_std": 0.01,
+      "bits_per_token": 5.187,
+      "bits_per_token_std": 0.0,
+      "hypothesis": "Compares 1D TSP vs alternating 2D bipartite TSP",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 36.42603529629175,
+          "bits_per_token": 5.186898071860749
+        },
+        {
+          "seed": 1337,
+          "test_ppl": 36.42081094534617,
+          "bits_per_token": 5.1866911405904785
+        },
+        {
+          "seed": 2026,
+          "test_ppl": 36.43416030879339,
+          "bits_per_token": 5.187219836445499
+        }
+      ]
+    },
+    {
+      "arm_id": 10,
+      "name": "PCA SVD Permutation x Wavelet (M+A)",
+      "perm_method": "pca",
+      "transform_type": "wavelet",
+      "use_multiplicative": true,
+      "use_additive": true,
+      "core_size": [
+        32,
+        32
+      ],
+      "trainable_params": 98304,
+      "adapter_size": "384.0 KB",
+      "test_ppl": 37.45,
+      "test_ppl_std": 0.1,
+      "bits_per_token": 5.227,
+      "bits_per_token_std": 0.004,
+      "hypothesis": "Evaluates spectral SVD ordination vs metric TSP",
+      "runs": [
+        {
+          "seed": 42,
+          "test_ppl": 37.47717145237865,
+          "bits_per_token": 5.227940166197785
+        },
+        {
+          "seed": 1337,
+          "test_ppl": 37.32232684297053,
+          "bits_per_token": 5.221967028026911
+        },
+        {
+          "seed": 2026,
+          "test_ppl": 37.555607306626136,
+          "bits_per_token": 5.230956422853638
+        }
+      ]
+    }
+  ]
+}

@@ -66,18 +66,17 @@ All experiments were conducted on GPT-2 Small (124M parameters, 12 layers, 12 he
 
 Target adaptation layers: Attention projection matrices (`c_attn`, `c_proj` across all 12 blocks, 24 target layers total).
 
-### 2.2 Comprehensive Results Across Regimes
+### 2.2 Comprehensive Results Across Regimes (Evaluated on Full WikiText-2 Test Set: 282,624 tokens, Seeds: 42, 1337, 2026)
 
-| Model / Configuration | Trainable Params | % Trainable | Adapter Storage | Test PPL | Merged PPL | Bits/Token |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **GPT-2 Base (FP32 zero-shot)** | 0 | 0.00% | 0 KB | 48.73 | 48.73 | 5.607 |
-| **LoRA (rank=8, alpha=16)** | 589,824 | 0.474% | 2.30 MB | 35.58 | 35.58 | 5.153 |
-| **QLoRA NF4 (rank=8, alpha=16)** | 589,824 | 0.474% | 2.32 MB | 38.01 | 38.01 | 5.248 |
-| **Spec-RAMA Wavelet (32x32, M+A)** | **98,304** | **0.079%** | **384 KB** | **37.96** | **37.96** | **5.246** |
-| **Spec-RAMA Wavelet (16x16, M+A)** | **24,576** | **0.020%** | **96 KB** | **38.45** | **38.45** | **5.265** |
-| **Spec-RAMA DCT (32x32, M+A)** | **98,304** | **0.079%** | **384 KB** | **38.96** | **38.96** | **5.284** |
-| **Spec-RAMA Wavelet (8x8, M+A)** | **4,608** | **0.0037%** | **18 KB** | **40.12** | **40.12** | **5.326** |
-| **Shared Core Spec-RAMA (8x8)** | **4,808** | **0.0038%** | **19 KB** | **40.35** | **40.35** | **5.334** |
+| Model / Configuration | Base Weights | Trainable Params | % Trainable | Adapter Storage | Test PPL ($\mu \pm \sigma$) | Bits/Token ($\mu \pm \sigma$) | Delta Native |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **GPT-2 Base (FP32 zero-shot)** | FP32 | 0 | 0.00% | 0 KB | $43.60 \pm 0.00$ | $5.446 \pm 0.000$ | +0.000 bpt |
+| **GPT-2 FP32 + Spec-RAMA (Tuned)** | FP32 | 98,304 | 0.079% | 384 KB | **$34.58 \pm 0.03$** | **$5.112 \pm 0.001$** | -0.334 bpt |
+| **Block-Wise NF4 Base (Zero-Shot)** | 4-bit NF4 | 0 | 0.00% | 0 KB | $46.56 \pm 0.00$ | $5.541 \pm 0.000$ | +0.095 bpt |
+| **Block-Wise NF4 + Spec-RAMA (Tuned)** | 4-bit NF4 | **98,304** | **0.079%** | **384 KB** | **$36.43 \pm 0.01$** | **$5.187 \pm 0.000$** | -0.259 bpt |
+| **Block-Wise NF4 + LoRA ($r=4$)** | 4-bit NF4 | 589,824 | 0.474% | 2.25 MB | $32.59 \pm 0.04$ | $5.026 \pm 0.002$ | -0.420 bpt |
+| **Asymmetric NF3/4 Base (Zero-Shot)** | 3.55-bit | 0 | 0.00% | 0 KB | $57.54 \pm 0.00$ | $5.846 \pm 0.000$ | +0.400 bpt |
+| **Asymmetric + Spec-RAMA (Tuned)** | 3.55-bit | 52,224 | 0.042% | 204 KB | $44.31 \pm 0.02$ | $5.470 \pm 0.001$ | +0.024 bpt |
 
 ---
 

@@ -16,15 +16,15 @@
 
 Comprehensive multi-seed results and technical analysis are consolidated in [docs/findings_consolidated.md](./docs/findings_consolidated.md).
 
-| Strategy / Configuration | Base Weights | Trainable Params | Adapter Size | TEST PPL ($\downarrow$) | Bits/Token (bpt) | $\Delta \text{bpt}$ vs Native FP32 | $\Delta \text{bpt}$ vs Adapted FP32 | Notes |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **1. GPT-2 FP32 (Zero-Shot)** | 32-bit FP32 | 0 | 0.0 KB | **46.18** | **5.529 bpt** | 0.000 bpt | N/A | Base Model Reference |
-| **2. GPT-2 FP32 + Spec-RAMA (Tuned)** | 32-bit FP32 | 98,304 | **384.0 KB** | **35.96** ↓ | **5.168 bpt** | -0.361 bpt | 0.000 bpt | **Adapted Upper Bound** |
-| **3. Block-Wise NF4 Base (Zero-Shot)** | 4-bit NF4 | 0 | 0.0 KB | **49.34** | **5.625 bpt** | +0.096 bpt | +0.456 bpt | Quantized Base |
-| **4. Block-Wise NF4 + Spec-RAMA (Tuned)** | 4-bit NF4 | 98,304 | **384.0 KB** | **37.96** ↓ | **5.246 bpt** | **-0.283 bpt** | **+0.078 bpt** | **Near-adapted-FP32 (<0.08 bpt)** |
-| **5. Block-Wise NF4 + LoRA ($r=4, \alpha=8$)** | 4-bit NF4 | 589,824 | **2.25 MB** | **33.38** ↓ | **5.061 bpt** | **-0.468 bpt** | **-0.107 bpt** | **LoRA tuned baseline** |
-| **6. Asymmetric NF3/4 Base (Zero-Shot)** | 3.55-bit NF3/4 | 0 | 0.0 KB | **60.45** | **5.918 bpt** | +0.389 bpt | +0.749 bpt | Extreme Quantization Base |
-| **7. Asymmetric + Spec-RAMA (Tuned)** | 3.55-bit NF3/4 | 52,224 | **204.0 KB** | **45.95** ↓ | **5.522 bpt** | **-0.007 bpt** | **+0.354 bpt** | **Outperforms Native FP32 at 3.55b** |
+| Strategy / Configuration | Base Weights | Trainable Params | Adapter Size | TEST PPL (mean $\pm$ std) | Bits/Token (mean $\pm$ std) | $\Delta \text{bpt}$ vs Native FP32 | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1. GPT-2 FP32 (Zero-Shot)** | 32-bit FP32 | 0 | 0.0 KB | **$43.60 \pm 0.00$** | **$5.446 \pm 0.000$** | 0.000 bpt | Base Reference |
+| **2. GPT-2 FP32 + Spec-RAMA (Tuned)** | 32-bit FP32 | 98,304 | **384.0 KB** | **$34.58 \pm 0.03$** ↓ | **$5.112 \pm 0.001$** | -0.334 bpt | **Adapted Upper Bound** |
+| **3. Block-Wise NF4 Base (Zero-Shot)** | 4-bit NF4 | 0 | 0.0 KB | **$46.56 \pm 0.00$** | **$5.541 \pm 0.000$** | +0.095 bpt | Quantized Base |
+| **4. Block-Wise NF4 + Spec-RAMA (Tuned)** | 4-bit NF4 | 98,304 | **384.0 KB** | **$36.43 \pm 0.01$** ↓ | **$5.187 \pm 0.000$** | **-0.259 bpt** | **Spec-RAMA (<0.08 bpt to FP32-adapted)** |
+| **5. Block-Wise NF4 + LoRA ($r=4, \alpha=8$)** | 4-bit NF4 | 589,824 | **2.25 MB** | **$32.59 \pm 0.04$** ↓ | **$5.026 \pm 0.002$** | **-0.420 bpt** | **LoRA (requires $6.0\times$ more parameters)** |
+| **6. Asymmetric NF3/4 Base (Zero-Shot)** | 3.55-bit NF3/4 | 0 | 0.0 KB | **$57.54 \pm 0.00$** | **$5.846 \pm 0.000$** | +0.400 bpt | 3.55-bit Extreme Quantized Base |
+| **7. Asymmetric + Spec-RAMA (Tuned)** | 3.55-bit NF3/4 | 52,224 | **204.0 KB** | **$44.31 \pm 0.02$** ↓ | **$5.470 \pm 0.001$** | **+0.024 bpt** | **Near-FP32 at 3.55 bits (204 KB adapter)** |
 
 The pre-trained base is strictly frozen ($\text{requires\_grad}=\text{False}$). Offline bipartite permutations construct a coordinate frame wherein weight updates are constrained to be spectrally smooth. At inference time, `merge()` folds the reconstructed update back into the base matrix with **0.000% reconstruction drift** (`Merged PPL == Tuned PPL`), adding **zero latency** to forward passes.
 

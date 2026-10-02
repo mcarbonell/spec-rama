@@ -99,6 +99,7 @@ def run_exp16(
     max_test_samples: int = 100,
     full_test: bool = False,
     seeds: Optional[List[int]] = None,
+    arm_ids: Optional[List[int]] = None,
     save_json: bool = True,
 ):
     if seeds is None:
@@ -106,7 +107,7 @@ def run_exp16(
 
     print("=" * 115)
     print(" [EXP-16] CAUSAL FACTORIAL ABLATION BENCHMARK (PERMUTATION x SPECTRAL BASE x RAMA MODULATION)")
-    print(f" Seeds: {seeds} | Full Test: {full_test} | Steps: {num_steps} | Device: {device.upper()}")
+    print(f" Seeds: {seeds} | Full Test: {full_test} | Steps: {num_steps} | Arms: {arm_ids or 'All'} | Device: {device.upper()}")
     print("=" * 115)
 
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -225,6 +226,9 @@ def run_exp16(
         },
     ]
 
+    if arm_ids is not None:
+        ablation_arms = [a for a in ablation_arms if a["id"] in arm_ids]
+
     results = []
 
     for arm in ablation_arms:
@@ -298,6 +302,18 @@ def run_exp16(
 
     if save_json:
         output_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "benchmarks", "exp16_results.json"))
+        final_results = results
+        if os.path.exists(output_path):
+            try:
+                with open(output_path, "r", encoding="utf-8") as f:
+                    old_data = json.load(f)
+                old_map = {r["arm_id"]: r for r in old_data.get("results", [])}
+                for r in results:
+                    old_map[r["arm_id"]] = r
+                final_results = sorted(list(old_map.values()), key=lambda x: x["arm_id"])
+            except Exception:
+                final_results = results
+
         output_payload = {
             "experiment": "EXP-16",
             "eval_tokens": test_token_count,
@@ -305,7 +321,7 @@ def run_exp16(
             "full_test_set": full_test,
             "num_steps": num_steps,
             "seeds": seeds,
-            "results": results,
+            "results": final_results,
         }
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(output_payload, f, indent=2)
@@ -321,6 +337,7 @@ if __name__ == "__main__":
     parser.add_argument("--test-samples", type=int, default=100, help="Number of test blocks")
     parser.add_argument("--full-test", action="store_true", help="Evaluate on full test set")
     parser.add_argument("--seeds", type=int, nargs="+", default=[42], help="List of random seeds (default: 42, recommended: 42 1337 2026)")
+    parser.add_argument("--arm-ids", type=int, nargs="+", default=None, help="List of arm IDs to run (default: run all 1-10)")
     args = parser.parse_args()
 
     run_exp16(
@@ -329,4 +346,5 @@ if __name__ == "__main__":
         max_test_samples=args.test_samples,
         full_test=args.full_test,
         seeds=args.seeds,
+        arm_ids=args.arm_ids,
     )

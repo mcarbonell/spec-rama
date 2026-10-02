@@ -22,7 +22,7 @@ spec_rama_image = (
 @app.function(
     image=spec_rama_image,
     gpu="A10G",
-    timeout=3600,
+    timeout=7200,
 )
 def run_remote_spec_rama_experiment(
     exp_name: str = "exp11",
@@ -30,6 +30,7 @@ def run_remote_spec_rama_experiment(
     full_test: bool = False,
     test_samples: int = 100,
     seeds: str = "42",
+    arm_ids: str = "",
 ):
     import sys
 
@@ -124,12 +125,14 @@ def run_remote_spec_rama_experiment(
     elif exp_name == "exp16":
         from benchmarks.exp16_causal_ablation import run_exp16
 
+        arm_id_list = [int(x.strip()) for x in arm_ids.split(",") if x.strip()] if arm_ids else None
         res = run_exp16(
             device="cuda",
             num_steps=steps,
             max_test_samples=test_samples,
             full_test=full_test,
             seeds=seed_list,
+            arm_ids=arm_id_list,
             save_json=True,
         )
     else:
@@ -146,12 +149,13 @@ def main(
     full_test: bool = False,
     test_samples: int = 100,
     seeds: str = "42,1337,2026",
+    arm_ids: str = "",
 ):
     import json
     import os
 
     print(
-        f"Launching SpecRAMA Experiment [{exp}] (steps={steps}, full_test={full_test}, seeds={seeds}) on Modal cloud GPU..."
+        f"Launching SpecRAMA Experiment [{exp}] (steps={steps}, full_test={full_test}, seeds={seeds}, arms={arm_ids or 'all'}) on Modal cloud GPU..."
     )
     result = run_remote_spec_rama_experiment.remote(
         exp_name=exp,
@@ -159,6 +163,7 @@ def main(
         full_test=full_test,
         test_samples=test_samples,
         seeds=seeds,
+        arm_ids=arm_ids,
     )
     if result is not None:
         filename = f"{exp}_multiseed_results.json" if "," in seeds else f"{exp}_results.json"

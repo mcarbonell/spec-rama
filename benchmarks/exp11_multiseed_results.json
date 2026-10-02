@@ -1,13 +1,6 @@
 {
-  "experiment": "EXP-11",
-  "eval_tokens": 512,
-  "eval_blocks": 2,
-  "full_test_set": false,
-  "num_steps": 1,
-  "seeds": [
-    42,
-    1337
-  ],
+  "experiment": "EXP11",
+  "seeds": "42,1337,2026",
   "results": [
     {
       "arm": 1,
@@ -15,9 +8,9 @@
       "format": "FP32",
       "trainable_params": 0,
       "adapter_size": "0.0 KB",
-      "test_ppl": 45.6,
+      "test_ppl": 43.6,
       "test_ppl_std": 0.0,
-      "bits_per_token": 5.511,
+      "bits_per_token": 5.446,
       "bits_per_token_std": 0.0,
       "delta_bpt_vs_native": 0.0,
       "delta_bpt_vs_adapted": null,
@@ -25,8 +18,8 @@
       "runs": [
         {
           "seed": 42,
-          "ppl": 45.60234605017993,
-          "bpt": 5.511036141818961
+          "ppl": 43.598587070230806,
+          "bpt": 5.446209476224401
         }
       ]
     },
@@ -36,23 +29,28 @@
       "format": "FP32",
       "trainable_params": 98304,
       "adapter_size": "384.0 KB",
-      "test_ppl": 45.63,
+      "test_ppl": 34.58,
       "test_ppl_std": 0.03,
-      "bits_per_token": 5.512,
+      "bits_per_token": 5.112,
       "bits_per_token_std": 0.001,
-      "delta_bpt_vs_native": 0.001,
+      "delta_bpt_vs_native": -0.334,
       "delta_bpt_vs_adapted": 0.0,
       "status": "Adapted Upper Bound",
       "runs": [
         {
           "seed": 42,
-          "ppl": 45.66300024103777,
-          "bpt": 5.5129537483760815
+          "ppl": 34.62327037945228,
+          "bpt": 5.113670097390328
         },
         {
           "seed": 1337,
-          "ppl": 45.59610569287407,
-          "bpt": 5.51083870573577
+          "ppl": 34.54956105085481,
+          "bpt": 5.110595476303277
+        },
+        {
+          "seed": 2026,
+          "ppl": 34.56277825802419,
+          "bpt": 5.111147285131072
         }
       ]
     },
@@ -62,18 +60,18 @@
       "format": "4-bit NF4",
       "trainable_params": 0,
       "adapter_size": "0.0 KB",
-      "test_ppl": 48.82,
+      "test_ppl": 46.56,
       "test_ppl_std": 0.0,
-      "bits_per_token": 5.609,
+      "bits_per_token": 5.541,
       "bits_per_token_std": 0.0,
-      "delta_bpt_vs_native": 0.098,
-      "delta_bpt_vs_adapted": 0.098,
+      "delta_bpt_vs_native": 0.095,
+      "delta_bpt_vs_adapted": 0.429,
       "status": "Proper Quantized Base",
       "runs": [
         {
           "seed": 42,
-          "ppl": 48.82036749782617,
-          "bpt": 5.609411250008392
+          "ppl": 46.5551191470687,
+          "bpt": 5.540867908472322
         }
       ]
     },
@@ -83,23 +81,28 @@
       "format": "4-bit NF4",
       "trainable_params": 98304,
       "adapter_size": "384.0 KB",
-      "test_ppl": 48.9,
+      "test_ppl": 36.43,
       "test_ppl_std": 0.01,
-      "bits_per_token": 5.612,
+      "bits_per_token": 5.187,
       "bits_per_token_std": 0.0,
-      "delta_bpt_vs_native": 0.101,
-      "delta_bpt_vs_adapted": 0.1,
+      "delta_bpt_vs_native": -0.259,
+      "delta_bpt_vs_adapted": 0.075,
       "status": "SpecRAMA Quantized",
       "runs": [
         {
           "seed": 42,
-          "ppl": 48.88953288158773,
-          "bpt": 5.611453715970039
+          "ppl": 36.42603551655444,
+          "bpt": 5.1868980805845055
         },
         {
           "seed": 1337,
-          "ppl": 48.909865474107846,
-          "bpt": 5.612053591456249
+          "ppl": 36.420812518425564,
+          "bpt": 5.186691202903034
+        },
+        {
+          "seed": 2026,
+          "ppl": 36.434161127094484,
+          "bpt": 5.187219868848028
         }
       ]
     },
@@ -109,23 +112,28 @@
       "format": "4-bit NF4",
       "trainable_params": 589824,
       "adapter_size": "2.25 MB",
-      "test_ppl": 48.8,
-      "test_ppl_std": 0.0,
-      "bits_per_token": 5.609,
-      "bits_per_token_std": 0.0,
-      "delta_bpt_vs_native": 0.098,
-      "delta_bpt_vs_adapted": 0.097,
+      "test_ppl": 32.59,
+      "test_ppl_std": 0.04,
+      "bits_per_token": 5.026,
+      "bits_per_token_std": 0.002,
+      "delta_bpt_vs_native": -0.42,
+      "delta_bpt_vs_adapted": -0.085,
       "status": "Head-to-Head QLoRA",
       "runs": [
         {
           "seed": 42,
-          "ppl": 48.80172428680263,
-          "bpt": 5.608860217595028
+          "ppl": 32.53496269536295,
+          "bpt": 5.023918994423355
         },
         {
           "seed": 1337,
-          "ppl": 48.80435392138202,
-          "bpt": 5.608937953753218
+          "ppl": 32.61998400389972,
+          "bpt": 5.0276841694724075
+        },
+        {
+          "seed": 2026,
+          "ppl": 32.620061099814045,
+          "bpt": 5.027687579215399
         }
       ]
     },
@@ -135,18 +143,18 @@
       "format": "3.55-bit",
       "trainable_params": 0,
       "adapter_size": "0.0 KB",
-      "test_ppl": 60.67,
+      "test_ppl": 57.54,
       "test_ppl_std": 0.0,
-      "bits_per_token": 5.923,
+      "bits_per_token": 5.846,
       "bits_per_token_std": 0.0,
-      "delta_bpt_vs_native": 0.412,
-      "delta_bpt_vs_adapted": 0.411,
+      "delta_bpt_vs_native": 0.4,
+      "delta_bpt_vs_adapted": 0.735,
       "status": "Quantized Base",
       "runs": [
         {
           "seed": 42,
-          "ppl": 60.66990457895625,
-          "bpt": 5.92290913720306
+          "ppl": 57.53670688466728,
+          "bpt": 5.846410745628836
         }
       ]
     },
@@ -156,23 +164,28 @@
       "format": "3.55-bit",
       "trainable_params": 52224,
       "adapter_size": "204.0 KB",
-      "test_ppl": 59.85,
-      "test_ppl_std": 0.21,
-      "bits_per_token": 5.903,
-      "bits_per_token_std": 0.005,
-      "delta_bpt_vs_native": 0.392,
-      "delta_bpt_vs_adapted": 0.391,
+      "test_ppl": 44.31,
+      "test_ppl_std": 0.02,
+      "bits_per_token": 5.47,
+      "bits_per_token_std": 0.001,
+      "delta_bpt_vs_native": 0.023,
+      "delta_bpt_vs_adapted": 0.358,
       "status": "Extreme Savings",
       "runs": [
         {
           "seed": 42,
-          "ppl": 59.64087947092381,
-          "bpt": 5.8982296268042465
+          "ppl": 44.326572906867284,
+          "bpt": 5.470099920251046
         },
         {
           "seed": 1337,
-          "ppl": 60.060687580214285,
-          "bpt": 5.908349085981015
+          "ppl": 44.283650229639534,
+          "bpt": 5.4687022409262545
+        },
+        {
+          "seed": 2026,
+          "ppl": 44.332799898224806,
+          "bpt": 5.470302575633815
         }
       ]
     }
