@@ -127,6 +127,23 @@ def list_permutation_methods():
     return sorted(list(set(builtins + list(_PERMUTATION_REGISTRY.keys()))))
 
 
+def _register_default_solvers():
+    try:
+        from spec_rama.permutation_ripple import compute_joint_bipartite_ripple_permutation
+        register_permutation_method("ripple_tsp", compute_joint_bipartite_ripple_permutation)
+    except ImportError:
+        pass
+
+    try:
+        from spec_rama.permutation_k_alternatives import compute_joint_bipartite_k_alternatives_permutation
+        register_permutation_method("k_alternatives_tsp", compute_joint_bipartite_k_alternatives_permutation)
+    except ImportError:
+        pass
+
+
+_register_default_solvers()
+
+
 def compute_2d_permutations(
     weight: torch.Tensor,
     method: str = "bipartite_tsp",

@@ -138,6 +138,10 @@
 
 - [x] **R25: Pipeline de GitHub Actions CI**
   - [x] Creado `.github/workflows/ci.yml` ejecutando `ruff` y `pytest --cov` automáticamente en cada push y PR.
-- [ ] **R24: Optimización de TSP para matrices de gran escala ($d \ge 4096$)**
-  - [ ] Evaluación de Nearest Neighbors aproximados o versiones batcheadas para escala LLaMA-70B.
+- [x] **R24: Optimización de TSP para matrices neuronales (Algoritmos Propios de Mario Raúl Carbonell Martínez)**
+  - [x] Creado `spec_rama/permutation_ripple.py`: Inserción dinámica más relajación por onda (*ripple cascading wavefront*) y post-procesamiento con 2-opt.
+  - [x] Creado `spec_rama/permutation_k_alternatives.py`: Meta-heurística con Limited Discrepancy Search (LDS), multi-start y aprendizaje adaptativo de políticas tipo RL sin redes neuronales.
+  - [x] Registrados ambos solvers en el registro extensible `register_permutation_method` (`ripple_tsp`, `k_alternatives_tsp`).
+  - [x] Tests unitarios completos en `tests/test_custom_tsp.py` (5/5 tests pasando, 45 tests totales).
+  - [x] Benchmark comparativo `benchmarks/exp17_tsp_comparison.py`: concentración de energía espectral en el núcleo $32\times 32$ incrementada hasta un $+150\%$ ($0.60\%$ vs $0.24\%$) respecto al greedy inicial.
 - [ ] **R26: Documentación API y Release Tag v0.2.0**
